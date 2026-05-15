@@ -1,0 +1,34 @@
+FROM node:20-bookworm-slim AS deps
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+WORKDIR /workspace
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY apps/frontend-main/package.json apps/frontend-main/
+COPY apps/frontend-admin/package.json apps/frontend-admin/
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile
+
+FROM deps AS build
+COPY . .
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXT_PUBLIC_BASE_PATH
+ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+RUN pnpm --filter @starter/frontend-main run build
+
+FROM node:20-bookworm-slim AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs nextjs
+
+COPY --from=build --chown=nextjs:nodejs /workspace/apps/frontend-main/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /workspace/apps/frontend-main/.next/static ./apps/frontend-main/.next/static
+COPY --from=build --chown=nextjs:nodejs /workspace/apps/frontend-main/public ./apps/frontend-main/public
+
+USER nextjs
+
+EXPOSE 3000
+CMD ["node", "apps/frontend-main/server.js"]

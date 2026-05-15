@@ -1,0 +1,16 @@
+# Registry deploy overlay — merge with docker-compose.prod.yml on the VM.
+# Requires BACKEND_IMAGE, FRONTEND_MAIN_IMAGE, FRONTEND_ADMIN_IMAGE, NGINX_IMAGE.
+# Do not use for local builds (use make prod-up with prod compose only).
+
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?BACKEND_IMAGE is required}
+
+  frontend-main:
+    image: ${FRONTEND_MAIN_IMAGE:?FRONTEND_MAIN_IMAGE is required}
+
+  frontend-admin:
+    image: ${FRONTEND_ADMIN_IMAGE:?FRONTEND_ADMIN_IMAGE is required}
+
+  nginx:
+    image: ${NGINX_IMAGE:?NGINX_IMAGE is required}

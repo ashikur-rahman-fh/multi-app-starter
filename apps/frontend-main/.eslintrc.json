@@ -1,0 +1,6 @@
+{
+  "extends": ["next/core-web-vitals", "../../.eslintrc.shared.json", "prettier"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

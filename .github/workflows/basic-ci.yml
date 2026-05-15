@@ -1,0 +1,116 @@
+name: Basic CI Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  docker-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy test environment file
+        run: cp infra/env/test/.env.example infra/env/test/.env
+
+      - name: Run tests (Docker Compose)
+        run: bash infra/scripts/test/test-all.sh
+
+  codebase-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: apps/backend/requirements-dev.txt
+
+      - name: Install Python dev dependencies
+        run: pip install -r apps/backend/requirements-dev.txt
+
+      - name: Format check (Prettier)
+        run: pnpm format:check
+
+      - name: Python format check (Ruff)
+        run: pnpm python:format:check
+
+      - name: Python lint (Ruff)
+        run: pnpm python:lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test (Vitest)
+        run: pnpm test
+
+      - name: Production build (frontend-main)
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
+        run: pnpm --filter @starter/frontend-main run build
+
+      - name: Production build (frontend-admin)
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
+        run: pnpm --filter @starter/frontend-admin run build
+
+      - name: Verify Next.js build artifacts
+        run: |
+          MAIN_BUILD_ID="apps/frontend-main/.next/BUILD_ID"
+          if [[ ! -f "$MAIN_BUILD_ID" ]]; then
+            echo "ERROR: Frontend build artifact not found at ${MAIN_BUILD_ID}. Run the frontend build locally and check the output directory." >&2
+            exit 1
+          fi
+          ADMIN_BUILD_ID="apps/frontend-admin/.next/BUILD_ID"
+          if [[ ! -f "$ADMIN_BUILD_ID" ]]; then
+            echo "ERROR: Frontend build artifact not found at ${ADMIN_BUILD_ID}. Run the frontend build locally and check the output directory." >&2
+            exit 1
+          fi
+          echo "frontend-main BUILD_ID=$(cat "$MAIN_BUILD_ID")"
+          echo "frontend-admin BUILD_ID=$(cat "$ADMIN_BUILD_ID")"
+
+      - name: Dependency audit
+        run: |
+          pnpm audit --audit-level=high --json > audit.json || audit_exit=$?
+          if [[ "${audit_exit:-0}" -ne 0 ]]; then
+            node <<'NODE'
+          const fs = require("fs");
+          const report = JSON.parse(fs.readFileSync("audit.json", "utf8"));
+          const advisories = Object.values(report.advisories || {});
+          const blocking = advisories.filter((advisory) => {
+            if (advisory.severity !== "high" && advisory.severity !== "critical") {
+              return false;
+            }
+            const paths = (advisory.findings || []).flatMap((finding) => finding.paths || []);
+            return !paths.every((path) => path.includes("next@"));
+          });
+          if (blocking.length > 0) {
+            console.error(`Found ${blocking.length} high/critical vulnerabilities outside Next.`);
+            process.exit(1);
+          }
+          console.log(
+            "High audit: only Next 14.x advisories remain (full remediation requires Next 15+).",
+          );
+          NODE
+          fi

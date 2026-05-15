@@ -1,0 +1,83 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Dev: Up",
+      "type": "shell",
+      "command": "make dev-up",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Down",
+      "type": "shell",
+      "command": "make dev-down",
+      "problemMatcher": []
+    },
+    {
+      "label": "Dev: Logs",
+      "type": "shell",
+      "command": "make dev-logs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug: Up",
+      "type": "shell",
+      "command": "make debug-up",
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug: Down",
+      "type": "shell",
+      "command": "make debug-down",
+      "problemMatcher": []
+    },
+    {
+      "label": "Debug: Logs",
+      "type": "shell",
+      "command": "make debug-logs",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Migrate",
+      "type": "shell",
+      "command": "make backend-migrate",
+      "problemMatcher": []
+    },
+    {
+      "label": "Backend: Create Superuser",
+      "type": "shell",
+      "command": "make backend-createsuperuser",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: All",
+      "type": "shell",
+      "command": "make test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Backend",
+      "type": "shell",
+      "command": "make test-backend",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Frontend Main",
+      "type": "shell",
+      "command": "make test-frontend-main",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Frontend Admin",
+      "type": "shell",
+      "command": "make test-frontend-admin",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Shared",
+      "type": "shell",
+      "command": "make test-shared",
+      "problemMatcher": []
+    }
+  ]
+}

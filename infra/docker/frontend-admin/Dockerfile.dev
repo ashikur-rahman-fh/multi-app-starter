@@ -1,0 +1,21 @@
+FROM node:20-bookworm-slim
+
+RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+WORKDIR /workspace
+
+COPY package.json pnpm-workspace.yaml ./
+COPY pnpm-lock.yaml* ./
+COPY apps/frontend-main/package.json apps/frontend-main/
+COPY apps/frontend-admin/package.json apps/frontend-admin/
+COPY packages/shared/package.json packages/shared/
+
+RUN if [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; else pnpm install; fi
+
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+EXPOSE 3001
+
+CMD ["pnpm", "--filter", "@starter/frontend-admin", "exec", "next", "dev", "-H", "0.0.0.0", "-p", "3001"]

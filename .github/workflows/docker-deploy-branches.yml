@@ -1,0 +1,309 @@
+# Build and push production Docker images when deployment branches are pushed.
+# Branch patterns: release_YYMMDD_N, staging_YYMMDD_N
+# See docs/runbook-docker-deploy.md for setup and usage.
+
+name: Docker Deploy Branches
+
+on:
+  push:
+    branches:
+      - 'release_*'
+      - 'staging_*'
+
+concurrency:
+  group: docker-deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate branch name
+    runs-on: ubuntu-latest
+    outputs:
+      github_environment: ${{ steps.parse.outputs.github_environment }}
+      deploy_version: ${{ steps.parse.outputs.deploy_version }}
+      branch_slug: ${{ steps.parse.outputs.branch_slug }}
+      image_tag: ${{ steps.parse.outputs.image_tag }}
+    steps:
+      - name: Validate deployment branch name
+        id: parse
+        run: |
+          BRANCH="${GITHUB_REF_NAME}"
+
+          if [[ "$BRANCH" =~ ^release_([0-9]{6})_([0-9]+)$ ]]; then
+            echo "github_environment=release_env" >> "$GITHUB_OUTPUT"
+            echo "branch_slug=release" >> "$GITHUB_OUTPUT"
+            echo "deploy_version=${BASH_REMATCH[1]}-${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=release-${BASH_REMATCH[1]}-${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          elif [[ "$BRANCH" =~ ^staging_([0-9]{6})_([0-9]+)$ ]]; then
+            echo "github_environment=staging_env" >> "$GITHUB_OUTPUT"
+            echo "branch_slug=staging" >> "$GITHUB_OUTPUT"
+            echo "deploy_version=${BASH_REMATCH[1]}-${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+            echo "image_tag=staging-${BASH_REMATCH[1]}-${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Invalid deployment branch name: '${BRANCH}'"
+            echo "::error::Expected release_YYMMDD_N or staging_YYMMDD_N (examples: release_260515_1, staging_260515_2)."
+            echo "::error::YYMMDD = date (6 digits), N = deployment number for that day (one or more digits)."
+            exit 1
+          fi
+
+          echo "Validated deployment branch: ${BRANCH}"
+
+  test:
+    name: Run full test suite
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy test environment file
+        run: cp infra/env/test/.env.example infra/env/test/.env
+
+      # Same entrypoint as basic-ci.yml docker-tests and `make test`.
+      - name: Run tests (Docker Compose)
+        run: bash infra/scripts/test/test-all.sh
+
+  # Mirrors basic-ci.yml codebase-quality production builds — catches Next.js compile
+  # failures before spending time on Docker image builds.
+  frontend-production-build:
+    name: Verify frontend production builds
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ needs.validate.outputs.github_environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify NEXT_PUBLIC_API_BASE_URL is set
+        run: |
+          if [[ -z "${{ vars.NEXT_PUBLIC_API_BASE_URL }}" ]]; then
+            echo "::error::Variable NEXT_PUBLIC_API_BASE_URL is not set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Production build (frontend-main)
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+        run: pnpm --filter @starter/frontend-main run build
+
+      - name: Production build (frontend-admin)
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+        run: pnpm --filter @starter/frontend-admin run build
+
+      - name: Verify Next.js build artifacts
+        run: |
+          test -f apps/frontend-main/.next/BUILD_ID
+          test -f apps/frontend-admin/.next/BUILD_ID
+
+  build-and-push:
+    name: Build and push Docker images
+    needs: [validate, test, frontend-production-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: ${{ needs.validate.outputs.github_environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image_suffix: backend
+            dockerfile: infra/docker/backend/Dockerfile.prod
+            needs_frontend_args: false
+          - image_suffix: frontend-main
+            dockerfile: infra/docker/frontend-main/Dockerfile.prod
+            needs_frontend_args: true
+          - image_suffix: frontend-admin
+            dockerfile: infra/docker/frontend-admin/Dockerfile.prod
+            needs_frontend_args: true
+          - image_suffix: nginx
+            dockerfile: infra/docker/nginx/Dockerfile
+            needs_frontend_args: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required Docker configuration
+        run: |
+          missing=0
+
+          if [[ -z "${{ secrets.DOCKER_USERNAME }}" ]]; then
+            echo "::error::Secret DOCKER_USERNAME is not set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
+            missing=1
+          fi
+
+          if [[ -z "${{ secrets.DOCKER_PASSWORD }}" && -z "${{ secrets.DOCKER_TOKEN }}" ]]; then
+            echo "::error::Secret DOCKER_PASSWORD or DOCKER_TOKEN must be set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
+            missing=1
+          fi
+
+          if [[ -z "${{ vars.DOCKER_REPO }}" ]]; then
+            echo "::error::Variable DOCKER_REPO is not set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
+            missing=1
+          fi
+
+          if [[ -z "${{ vars.BRANCH_SLUG }}" ]]; then
+            echo "::error::Variable BRANCH_SLUG is not set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
+            missing=1
+          fi
+
+          if [[ "${{ vars.BRANCH_SLUG }}" != "${{ needs.validate.outputs.branch_slug }}" ]]; then
+            echo "::error::Variable BRANCH_SLUG ('${{ vars.BRANCH_SLUG }}') does not match this branch type ('${{ needs.validate.outputs.branch_slug }}')."
+            missing=1
+          fi
+
+          if [[ "${{ matrix.needs_frontend_args }}" == "true" && -z "${{ vars.NEXT_PUBLIC_API_BASE_URL }}" ]]; then
+            echo "::error::Variable NEXT_PUBLIC_API_BASE_URL is required to build frontend images."
+            missing=1
+          fi
+
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::error::Fix the GitHub Environment configuration. See docs/runbook-docker-deploy.md."
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD || secrets.DOCKER_TOKEN }}
+
+      - name: Build and push ${{ matrix.image_suffix }} (frontend)
+        if: matrix.needs_frontend_args == true
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ vars.DOCKER_REPO }}-${{ matrix.image_suffix }}:${{ vars.BRANCH_SLUG }}-${{ needs.validate.outputs.deploy_version }}
+            ${{ vars.DOCKER_REPO }}-${{ matrix.image_suffix }}:${{ vars.BRANCH_SLUG }}-latest
+          # One build-arg per line (docker/build-push-action); do not use format('\n').
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+            NEXT_PUBLIC_BASE_PATH=${{ vars.NEXT_PUBLIC_BASE_PATH }}
+          cache-from: type=gha,scope=${{ matrix.image_suffix }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image_suffix }}
+
+      - name: Build and push ${{ matrix.image_suffix }}
+        if: matrix.needs_frontend_args != true
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ vars.DOCKER_REPO }}-${{ matrix.image_suffix }}:${{ vars.BRANCH_SLUG }}-${{ needs.validate.outputs.deploy_version }}
+            ${{ vars.DOCKER_REPO }}-${{ matrix.image_suffix }}:${{ vars.BRANCH_SLUG }}-latest
+          cache-from: type=gha,scope=${{ matrix.image_suffix }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image_suffix }}
+
+  deploy:
+    name: Deploy to VM
+    needs: [validate, build-and-push]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ needs.validate.outputs.github_environment }}
+    # Serialize deploys per VM (staging_env / release_env); do not cancel in-flight deploys.
+    concurrency:
+      group: vm-deploy-${{ needs.validate.outputs.github_environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Verify deploy configuration
+        run: |
+          missing=0
+
+          if [[ -z "${{ secrets.VM_HOST }}" ]]; then
+            echo "::error::Secret VM_HOST is not set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
+            missing=1
+          fi
+          if [[ -z "${{ secrets.VM_USER }}" ]]; then
+            echo "::error::Secret VM_USER is not set."
+            missing=1
+          fi
+          if [[ -z "${{ secrets.VM_SSH_KEY }}" ]]; then
+            echo "::error::Secret VM_SSH_KEY is not set."
+            missing=1
+          fi
+          if [[ -z "${{ secrets.DOCKER_USERNAME }}" ]]; then
+            echo "::error::Secret DOCKER_USERNAME is not set."
+            missing=1
+          fi
+          if [[ -z "${{ secrets.DOCKER_PASSWORD }}" && -z "${{ secrets.DOCKER_TOKEN }}" ]]; then
+            echo "::error::Secret DOCKER_PASSWORD or DOCKER_TOKEN is not set."
+            missing=1
+          fi
+          if [[ -z "${{ vars.DOCKER_REPO }}" ]]; then
+            echo "::error::Variable DOCKER_REPO is not set."
+            missing=1
+          fi
+          if [[ -z "${{ vars.BRANCH_SLUG }}" ]]; then
+            echo "::error::Variable BRANCH_SLUG is not set."
+            missing=1
+          fi
+          if [[ "${{ vars.BRANCH_SLUG }}" != "${{ needs.validate.outputs.branch_slug }}" ]]; then
+            echo "::error::Variable BRANCH_SLUG does not match branch type."
+            missing=1
+          fi
+          if [[ -z "${{ vars.DEPLOY_PATH }}" ]]; then
+            echo "::error::Variable DEPLOY_PATH is not set (full repo clone path on VM)."
+            missing=1
+          fi
+
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::error::Fix deploy configuration. See docs/runbook-docker-deploy.md."
+            exit 1
+          fi
+
+          echo "Deploy tag: ${{ needs.validate.outputs.image_tag }}"
+          echo "Target environment: ${{ needs.validate.outputs.github_environment }}"
+
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
+        env:
+          IMAGE_TAG: ${{ needs.validate.outputs.image_tag }}
+          BRANCH_SLUG: ${{ needs.validate.outputs.branch_slug }}
+          DEPLOY_VERSION: ${{ needs.validate.outputs.deploy_version }}
+          DOCKER_REPO: ${{ vars.DOCKER_REPO }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD || secrets.DOCKER_TOKEN }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          COMPOSE_FILE: ${{ vars.COMPOSE_FILE }}
+          COMPOSE_DEPLOY_FILE: infra/docker/compose/docker-compose.deploy.yml
+          ENV_FILE: infra/env/prod/.env
+          BACKUP_DIR: ${{ vars.BACKUP_DIR }}
+          DB_SERVICE_NAME: ${{ vars.DB_SERVICE_NAME }}
+          DB_BACKUP_COMMAND: ${{ vars.DB_BACKUP_COMMAND }}
+          APP_DOMAIN: ${{ vars.APP_DOMAIN }}
+          GIT_REF: ${{ github.ref_name }}
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ secrets.VM_SSH_PORT || 22 }}
+          script_stop: true
+          envs: IMAGE_TAG,BRANCH_SLUG,DEPLOY_VERSION,DOCKER_REPO,DOCKER_USERNAME,DOCKER_PASSWORD,DEPLOY_PATH,COMPOSE_FILE,COMPOSE_DEPLOY_FILE,ENV_FILE,BACKUP_DIR,DB_SERVICE_NAME,DB_BACKUP_COMMAND,APP_DOMAIN,GIT_REF
+          script: |
+            set -euo pipefail
+            cd "$DEPLOY_PATH"
+            bash infra/scripts/deploy/vm-deploy.sh

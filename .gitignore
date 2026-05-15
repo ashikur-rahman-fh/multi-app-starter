@@ -1,0 +1,44 @@
+# env files
+infra/env/**/.env
+!infra/env/**/.env.example
+
+# generated nginx vhost config (source: conf.d/default.conf.template + infra/env/prod/.env)
+infra/nginx/prod/conf.d/default.conf
+
+# production certificates
+infra/nginx/prod/certs/*
+!infra/nginx/prod/certs/.gitkeep
+!infra/nginx/prod/certs/README.md
+
+# certificate file types
+*.key
+*.crt
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+apps/backend/.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+.pnpm-store/
+.next/
+dist/
+coverage/
+.env.local
+.env.*.local
+
+# OS / logs
+.DS_Store
+*.log
+
+# Django collected static files (keep directory; contents generated)
+apps/backend/staticfiles/*
+!apps/backend/staticfiles/.gitkeep
+
+# database backups
+infra/scripts/db/backups/*.sql
+infra/scripts/db/backups/*.sql.gz

@@ -1,0 +1,30 @@
+.git
+**/.git
+.pnpm-store
+**/.pnpm-store
+**/node_modules
+**/.next
+**/.venv
+**/__pycache__
+.pytest_cache
+coverage
+*.log
+.DS_Store
+
+# env files
+infra/env/**/.env
+!infra/env/**/.env.example
+
+# production certificates
+infra/nginx/prod/certs/*
+!infra/nginx/prod/certs/.gitkeep
+!infra/nginx/prod/certs/README.md
+
+# database backups
+infra/scripts/db/backups/*.sql
+infra/scripts/db/backups/*.sql.gz
+
+# certificate file types
+*.key
+*.crt
+*.pem

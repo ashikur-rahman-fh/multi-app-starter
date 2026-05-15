@@ -1,0 +1,40 @@
+name: starter-test
+
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    env_file:
+      - ./infra/env/test/.env
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis-test:
+    image: redis:7-alpine
+    env_file:
+      - ./infra/env/test/.env
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: infra/docker/test-runner/Dockerfile
+    env_file:
+      - ./infra/env/test/.env
+    environment:
+      CI: 'true'
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    command: ['bash', 'infra/scripts/test/test-runner.sh']
