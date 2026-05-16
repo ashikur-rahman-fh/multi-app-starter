@@ -3,6 +3,7 @@ import os
 from django.core.exceptions import ImproperlyConfigured
 
 from .base import *  # noqa: F403
+from .validators import validate_prod_origins
 
 
 def require_secret(name: str) -> str:
@@ -29,3 +30,18 @@ USE_X_FORWARDED_HOST = True
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+X_FRAME_OPTIONS = "DENY"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+# HttpOnly prevents JS from reading csrftoken. Fine for Django admin and stateless
+# fetch today. If Next apps adopt cookie/session auth, use a BFF/CSRF endpoint or
+# revisit CSRF_COOKIE_HTTPONLY (see docs/environment-variables.md).
+CSRF_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SAMESITE = "Lax"
+
+
+validate_prod_origins("CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS)  # noqa: F405
+validate_prod_origins("CSRF_TRUSTED_ORIGINS", CSRF_TRUSTED_ORIGINS)  # noqa: F405

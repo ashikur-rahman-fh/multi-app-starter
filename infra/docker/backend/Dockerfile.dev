@@ -10,8 +10,9 @@ COPY apps/backend/requirements.txt apps/backend/requirements-dev.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt -r /tmp/requirements-dev.txt
 
 COPY apps/backend/ /app/
-RUN mkdir -p /app/staticfiles && chmod +x /app/docker-entrypoint-debug.sh
+RUN mkdir -p /app/staticfiles \
+  && chmod +x /app/docker-entrypoint-debug.sh /app/docker-entrypoint-dev.sh
 
 EXPOSE 8000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["/app/docker-entrypoint-dev.sh"]

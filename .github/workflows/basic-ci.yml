@@ -6,19 +6,7 @@ on:
   pull_request:
 
 jobs:
-  docker-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Copy test environment file
-        run: cp infra/env/test/.env.example infra/env/test/.env
-
-      - name: Run tests (Docker Compose)
-        run: bash infra/scripts/test/test-all.sh
-
+  # Format, lint, typecheck, Vitest, Next production builds, audit — fast on the runner (no test DB).
   codebase-quality:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -60,6 +48,8 @@ jobs:
         run: pnpm typecheck
 
       - name: Lint
+        env:
+          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
         run: pnpm lint
 
       - name: Test (Vitest)
@@ -114,3 +104,18 @@ jobs:
           );
           NODE
           fi
+
+  # Backend pytest only — needs Postgres/Redis from test compose (not run on host in CI).
+  docker-tests:
+    needs: codebase-quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy test environment file
+        run: cp infra/env/test/.env.example infra/env/test/.env
+
+      - name: Run backend tests (Docker Compose)
+        run: bash infra/scripts/test/test-all.sh

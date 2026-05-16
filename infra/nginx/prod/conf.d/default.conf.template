@@ -35,9 +35,12 @@ server {
     ssl_certificate     /etc/nginx/certs/origin.crt;
     ssl_certificate_key /etc/nginx/certs/origin.key;
 
-    client_max_body_size 25m;
+    include /etc/nginx/snippets/security-headers-prod.conf;
+
+    client_max_body_size ${CLIENT_MAX_BODY_SIZE};
 
     location / {
+        limit_req zone=general burst=20 nodelay;
         proxy_pass http://main_frontend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -57,9 +60,12 @@ server {
     ssl_certificate     /etc/nginx/certs/origin.crt;
     ssl_certificate_key /etc/nginx/certs/origin.key;
 
-    client_max_body_size 25m;
+    include /etc/nginx/snippets/security-headers-prod.conf;
+
+    client_max_body_size ${CLIENT_MAX_BODY_SIZE};
 
     location / {
+        limit_req zone=general burst=20 nodelay;
         proxy_pass http://admin_frontend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -79,9 +85,30 @@ server {
     ssl_certificate     /etc/nginx/certs/origin.crt;
     ssl_certificate_key /etc/nginx/certs/origin.key;
 
-    client_max_body_size 25m;
+    include /etc/nginx/snippets/security-headers-prod.conf;
+
+    client_max_body_size ${CLIENT_MAX_BODY_SIZE};
+
+    location = /api/health/ {
+        limit_req zone=api burst=50 nodelay;
+        proxy_pass http://django_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+
+    location = /admin/login/ {
+        limit_req zone=login burst=3 nodelay;
+        proxy_pass http://django_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+    }
 
     location / {
+        limit_req zone=api burst=30 nodelay;
         proxy_pass http://django_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

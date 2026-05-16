@@ -39,6 +39,7 @@ MAIN_FRONTEND_HOST="$(read_env_var_from_file "$env_abs" MAIN_FRONTEND_HOST)"
 ADMIN_FRONTEND_HOST="$(read_env_var_from_file "$env_abs" ADMIN_FRONTEND_HOST)"
 API_HOST="$(read_env_var_from_file "$env_abs" API_HOST)"
 MAIN_FRONTEND_WWW_HOST="$(read_env_var_from_file "$env_abs" MAIN_FRONTEND_WWW_HOST)"
+CLIENT_MAX_BODY_SIZE="$(read_env_var_from_file "$env_abs" CLIENT_MAX_BODY_SIZE)"
 
 if [[ -z "$MAIN_FRONTEND_HOST" || -z "$ADMIN_FRONTEND_HOST" || -z "$API_HOST" ]]; then
   echo "::error::Set MAIN_FRONTEND_HOST, ADMIN_FRONTEND_HOST, and API_HOST in ${env_abs}" >&2
@@ -49,10 +50,14 @@ if [[ -z "$MAIN_FRONTEND_WWW_HOST" ]]; then
   MAIN_FRONTEND_WWW_HOST="www.${MAIN_FRONTEND_HOST}"
 fi
 
-export MAIN_FRONTEND_HOST MAIN_FRONTEND_WWW_HOST ADMIN_FRONTEND_HOST API_HOST
+if [[ -z "$CLIENT_MAX_BODY_SIZE" ]]; then
+  CLIENT_MAX_BODY_SIZE="25m"
+fi
+
+export MAIN_FRONTEND_HOST MAIN_FRONTEND_WWW_HOST ADMIN_FRONTEND_HOST API_HOST CLIENT_MAX_BODY_SIZE
 
 tmp="${ROOT}/${OUTPUT}.tmp.$$"
-envsubst '${MAIN_FRONTEND_HOST} ${MAIN_FRONTEND_WWW_HOST} ${ADMIN_FRONTEND_HOST} ${API_HOST}' \
+envsubst '${MAIN_FRONTEND_HOST} ${MAIN_FRONTEND_WWW_HOST} ${ADMIN_FRONTEND_HOST} ${API_HOST} ${CLIENT_MAX_BODY_SIZE}' \
   < "${ROOT}/${TEMPLATE}" > "$tmp"
 mv "$tmp" "${ROOT}/${OUTPUT}"
 

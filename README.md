@@ -96,7 +96,7 @@ npx pnpm@9.15.0 build
 
 CI runs separate build steps for each app plus artifact verification (see [`docs/testing.md`](docs/testing.md)).
 
-CI runs static checks in the `codebase-quality` job and full Docker tests in the `docker-tests` job (see [`docs/testing.md`](docs/testing.md)).
+CI runs static checks and Vitest in `codebase-quality`, then backend pytest in Docker (`docker-tests`). See [`docs/testing.md`](docs/testing.md).
 
 ## First-time environment setup
 
@@ -135,15 +135,14 @@ make backend-createsuperuser
 
 | Surface        | URL                                                                                  |
 | -------------- | ------------------------------------------------------------------------------------ |
-| Main frontend  | http://localhost:3000                                                                |
-| Admin frontend | http://localhost:3001 (with dev Nginx path prefix: http://localhost:3001/app-admin/) |
-| Backend API    | http://localhost:8000                                                                |
-| Health         | http://localhost:8000/api/health/                                                    |
-| Hello          | http://localhost:8000/api/hello/                                                     |
-| Django admin   | http://localhost:8000/admin/                                                         |
-| Nginx (HTTP)   | http://localhost:8080                                                                |
+| **Nginx (recommended)** | http://localhost:8080 — main site, `/app-admin/`, `/api/`, `/admin/`        |
+| Main frontend  | http://localhost:3000 (direct) or http://localhost:8080/ (via Nginx)                 |
+| Admin frontend | http://localhost:3001/app-admin/ (direct) or http://localhost:8080/app-admin/        |
+| Backend API (browser) | http://localhost:8080/api/ via Nginx (`NEXT_PUBLIC_API_BASE_URL`)             |
+| Backend API (direct) | http://localhost:8000/api/ (host → container; debugging only)                  |
+| Django admin   | http://localhost:8080/admin/ (Nginx) or http://localhost:8000/admin/               |
 
-**Note (single-host Nginx + Django admin):** Django’s admin UI lives at `/admin/`. The Next “admin shell” is routed under **`/app-admin/`** in dev Nginx to avoid colliding with Django. The dev/debug Compose files set `NEXT_PUBLIC_BASE_PATH=/app-admin` for the admin Next app.
+**Note (single-host Nginx + Django admin):** Django’s admin UI lives at `/admin/`. The Next “admin shell” is routed under **`/app-admin/`** in dev Nginx to avoid colliding with Django. Dev Compose sets `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` and `NEXT_PUBLIC_BASE_PATH=/app-admin` for the admin Next app.
 
 ## Debug development (Django + debugpy)
 
@@ -176,7 +175,7 @@ Local (requires Docker + `infra/env/test/.env`):
 make test
 ```
 
-Prefer **`make test`** (or `bash infra/scripts/test/test-all.sh`), which starts Postgres/Redis detached, runs **`docker compose run`** for `test-runner`, then tears the stack down. For ad-hoc logs from the test DB layer, use `docker compose --project-directory "$(pwd)" -f infra/docker/compose/docker-compose.test.yml logs -f postgres-test redis-test` while the stack is up.
+Prefer **`pnpm check`** for format/lint/Vitest/Next builds, then **`make test`** for backend pytest in Docker (Postgres/Redis). `make test` runs `test-all.sh`, which starts the test DB layer, runs **`docker compose run`** for `test-runner` (pytest only), then tears the stack down.
 
 ## Production skeleton
 

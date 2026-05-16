@@ -212,10 +212,12 @@ For **each** environment, add:
 With [GitHub CLI](https://cli.github.com/) (`gh`), for example:
 
 ```bash
-gh variable set NEXT_PUBLIC_API_BASE_URL --env staging_env --body 'https://api.itsashikur.com'
+gh variable set NEXT_PUBLIC_API_BASE_URL --env staging_env --body 'https://api.staging.example.com'
 gh variable set NEXT_PUBLIC_BASE_PATH --env staging_env --body ''
-gh variable set APP_DOMAIN --env staging_env --body 'api.itsashikur.com'
+gh variable set APP_DOMAIN --env staging_env --body 'api.staging.example.com'
 ```
+
+Use your real public API hostname (any domain). **No leading or trailing spaces** in the value — a leading space before `https://` will fail CI validation.
 
 Repeat for `release_env` when using production. `NEXT_PUBLIC_BASE_PATH` must be empty when frontends use separate hostnames (not path-based routing).
 
@@ -297,7 +299,7 @@ Do this once per server (staging VM and production VM separately).
 2. Add the deploy user to the `docker` group.
 3. **Clone this repository** to `DEPLOY_PATH` (e.g. `/opt/multi-app-starter`).
 4. Copy environment file (`cp infra/env/prod/.env.example infra/env/prod/.env`) and edit values for this server. **Do not commit `.env`.**
-5. Set `MAIN_FRONTEND_HOST`, `MAIN_FRONTEND_WWW_HOST`, `ADMIN_FRONTEND_HOST`, and `API_HOST` in `.env` (deploy re-renders Nginx from these automatically).
+5. Set `MAIN_FRONTEND_HOST`, `MAIN_FRONTEND_WWW_HOST`, `ADMIN_FRONTEND_HOST`, and `API_HOST` in `.env` (deploy re-renders Nginx from these automatically). After changing security-related Nginx settings or `CLIENT_MAX_BODY_SIZE`, run `make prod-nginx-config` on the VM and restart the nginx container so `infra/nginx/snippets/` and the rendered vhost are picked up.
 6. Set registry deploy keys in the same `.env` for manual deploy: `DOCKER_REPO`, `BRANCH_SLUG`, `DOCKER_USERNAME`, `DOCKER_TOKEN`, `BACKUP_DIR`, `COMPOSE_PROJECT_NAME` (keep `starter-prod` if containers already use that prefix), `APP_DOMAIN` / `API_HOST` (mirror GitHub Environment variables).
 7. Add TLS certificates under `infra/nginx/prod/certs/` if using HTTPS.
 8. Install `envsubst` if missing: `sudo apt install gettext-base`
@@ -308,6 +310,15 @@ Do this once per server (staging VM and production VM separately).
    ```
 10. Authorize the GitHub deploy **SSH public key** for `VM_USER` in `~/.ssh/authorized_keys`.
 11. (First deploy) If Postgres is not running yet, the deploy will **skip** the DB backup and still pull images and start the stack. Later deploys will dump once Postgres is healthy.
+
+### Cloudflare + rate limiting
+
+Production Nginx restores the visitor IP from Cloudflare before applying rate limits:
+
+- Config: `infra/nginx/snippets/real-ip-cloudflare.conf` and `cloudflare-ips.conf`
+- **Require** HTTPS traffic on port 443 to reach the VM only from Cloudflare IPs (firewall / security group). Otherwise clients can spoof `CF-Connecting-IP` on direct connections.
+- Refresh `cloudflare-ips.conf` when [Cloudflare publishes IP range changes](https://www.cloudflare.com/ips-v4/).
+- After updating snippets or rendered vhost config: `make prod-nginx-config` (if needed) and restart the nginx container.
 
 ---
 

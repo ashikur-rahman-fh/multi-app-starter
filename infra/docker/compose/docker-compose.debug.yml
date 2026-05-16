@@ -37,6 +37,18 @@ services:
       - '8000:8000'
       - '5678:5678'
     command: ['/bin/bash', '/app/docker-entrypoint-debug.sh']
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,6 +63,7 @@ services:
       - ./infra/env/dev/.env
     environment:
       WATCHPACK_POLLING: 'true'
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
     volumes:
       - .:/workspace
     ports:
@@ -67,6 +80,7 @@ services:
     environment:
       WATCHPACK_POLLING: 'true'
       NEXT_PUBLIC_BASE_PATH: '/app-admin'
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
     volumes:
       - .:/workspace
     ports:
@@ -81,12 +95,16 @@ services:
     volumes:
       - ./infra/nginx/dev/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/dev/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/nginx/snippets:/etc/nginx/snippets:ro
     ports:
       - '8080:80'
     depends_on:
-      - backend
-      - frontend-main
-      - frontend-admin
+      backend:
+        condition: service_healthy
+      frontend-main:
+        condition: service_started
+      frontend-admin:
+        condition: service_started
 
 volumes:
   postgres_debug_data:

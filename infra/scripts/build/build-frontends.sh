@@ -7,6 +7,8 @@ cd "$ROOT"
 
 export NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-https://api.example.test}"
 
+bash "${ROOT}/infra/scripts/build/validate-public-api-url.sh" "$NEXT_PUBLIC_API_BASE_URL" production
+
 echo "==> Building @starter/frontend-main (NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL})"
 pnpm --filter @starter/frontend-main run build
 
