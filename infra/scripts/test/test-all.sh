@@ -35,4 +35,10 @@ set +e
 "${COMPOSE[@]}" run --rm --build --no-deps test-runner
 exit_code=$?
 set -e
-exit "$exit_code"
+
+if [[ "$exit_code" -ne 0 ]]; then
+  exit "$exit_code"
+fi
+
+echo "==> Admin root routing smoke (Docker curl)"
+bash "${ROOT}/infra/scripts/test/test-smoke-admin.sh"

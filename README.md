@@ -96,7 +96,7 @@ npx pnpm@9.15.0 build
 
 CI runs separate build steps for each app plus artifact verification (see [`docs/testing.md`](docs/testing.md)).
 
-CI runs static checks in the `codebase-quality` job and full Docker tests in the `docker-tests` job (see [`docs/testing.md`](docs/testing.md)).
+CI runs static checks and Vitest in `codebase-quality`, then backend pytest and admin root routing smoke in Docker (`docker-tests`). See [`docs/testing.md`](docs/testing.md).
 
 ## First-time environment setup
 
@@ -135,15 +135,14 @@ make backend-createsuperuser
 
 | Surface        | URL                                                                                  |
 | -------------- | ------------------------------------------------------------------------------------ |
-| Main frontend  | http://localhost:3000                                                                |
-| Admin frontend | http://localhost:3001 (with dev Nginx path prefix: http://localhost:3001/app-admin/) |
-| Backend API    | http://localhost:8000                                                                |
-| Health         | http://localhost:8000/api/health/                                                    |
-| Hello          | http://localhost:8000/api/hello/                                                     |
-| Django admin   | http://localhost:8000/admin/                                                         |
-| Nginx (HTTP)   | http://localhost:8080                                                                |
+| **Nginx (recommended)** | http://localhost:8080 — main site, `/api/`, `/admin/` (Django)                       |
+| Main frontend  | http://localhost:3000 (direct) or http://localhost:8080/ (via Nginx)                 |
+| Admin frontend | http://localhost:3001/ (admin home page; dedicated port in dev)                      |
+| Backend API (browser) | http://localhost:8080/api/ via Nginx (`NEXT_PUBLIC_API_BASE_URL`)             |
+| Backend API (direct) | http://localhost:8000/api/ (host → container; debugging only)                  |
+| Django admin   | http://localhost:8080/admin/ (Nginx) or http://localhost:8000/admin/               |
 
-**Note (single-host Nginx + Django admin):** Django’s admin UI lives at `/admin/`. The Next “admin shell” is routed under **`/app-admin/`** in dev Nginx to avoid colliding with Django. The dev/debug Compose files set `NEXT_PUBLIC_BASE_PATH=/app-admin` for the admin Next app.
+**Note:** Django’s admin UI is at `/admin/` on Nginx (`:8080`). The Next admin shell runs on **`:3001/`** so it does not collide with Django. Dev Compose sets `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` for browser API calls via Nginx.
 
 ## Debug development (Django + debugpy)
 
@@ -176,7 +175,7 @@ Local (requires Docker + `infra/env/test/.env`):
 make test
 ```
 
-Prefer **`make test`** (or `bash infra/scripts/test/test-all.sh`), which starts Postgres/Redis detached, runs **`docker compose run`** for `test-runner`, then tears the stack down. For ad-hoc logs from the test DB layer, use `docker compose --project-directory "$(pwd)" -f infra/docker/compose/docker-compose.test.yml logs -f postgres-test redis-test` while the stack is up.
+Prefer **`pnpm check`** for format/lint/Vitest/Next builds, then **`make test`** for backend pytest and admin routing smoke in Docker. `make test` runs `test-all.sh` (pytest, then curl smoke for `http://localhost:3001/`). Use **`make test-smoke-admin`** to rerun smoke only.
 
 ## Production skeleton
 
@@ -201,7 +200,7 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 | Dev        | `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-restart`                                                      |
 | Debug      | `make debug-up`, `make debug-down`, `make debug-build`, `make debug-logs`, `make debug-restart`                                            |
 | Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-createsuperuser`, `make backend-shell`                                |
-| Tests      | `make test`, `make test-backend`, `make test-frontend-main`, `make test-frontend-admin`, `make test-shared`, `make test-integration`       |
+| Tests      | `make test`, `make test-smoke-admin`, `make test-backend`, `make test-frontend-main`, `make test-frontend-admin`, `make test-shared`, `make test-integration` |
 | Prod       | `make prod-up` (local build), `make prod-deploy IMAGE_TAG=…` (registry pull), `make prod-rollback`, `make prod-down`, `make prod-build`, `make prod-logs`, `make prod-restart`, `make prod-migrate`, `make prod-collectstatic`, `make prod-nginx-config` |
 | DB helpers | `make db-backup`, `make db-restore`, `make db-reset` (`FORCE=1` skips reset confirmation)                                                  |
 

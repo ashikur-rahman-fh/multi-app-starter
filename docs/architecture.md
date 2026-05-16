@@ -45,7 +45,7 @@ Used as Django’s default cache backend (`django-redis`).
 
 ### Nginx
 
-- **Dev/Debug**: HTTP reverse proxy on `:8080` routing `/`, `/app-admin/`, `/api/`, `/static/`, and `/admin/` (Django admin).
+- **Dev/Debug**: HTTP reverse proxy on `:8080` routing `/`, `/api/`, `/static/`, and `/admin/` (Django admin). Next admin shell on `:3001/`.
 - **Prod**: HTTPS-only routing by hostname (`starter.com`, `admin.starter.com`, `api.starter.com` in the sample config).
 
 ### Docker Compose environments
@@ -68,8 +68,8 @@ so paths inside YAML (`context: .`, `./apps/...`, `./infra/...`) stay root-relat
 ```mermaid
 flowchart LR
   Browser --> NginxDev[Nginx:8080]
+  Browser --> AdminNext[frontend-admin:3001]
   NginxDev --> MainNext[frontend-main:3000]
-  NginxDev --> AdminNext[frontend-admin:3001]
   NginxDev --> Django[backend:8000]
   MainNext --> Django
   AdminNext --> Django

@@ -1,7 +1,7 @@
 .PHONY: dev-up dev-down dev-build dev-logs dev-restart \
 	debug-up debug-down debug-build debug-logs debug-restart \
 	backend-shell backend-migrate backend-makemigrations backend-createsuperuser \
-	editor-happy build check test test-all test-backend test-frontend-main test-frontend-admin test-shared test-integration \
+	editor-happy build check test test-all test-smoke-admin test-backend test-frontend-main test-frontend-admin test-shared test-integration \
 	prod-up prod-down prod-build prod-logs prod-restart prod-migrate prod-collectstatic prod-nginx-config \
 	prod-deploy prod-rollback \
 	db-backup db-restore db-reset
@@ -62,6 +62,9 @@ test:
 	bash infra/scripts/test/test-all.sh
 
 test-all: test
+
+test-smoke-admin:
+	bash infra/scripts/test/test-smoke-admin.sh
 
 test-backend:
 	bash infra/scripts/test/test-backend.sh

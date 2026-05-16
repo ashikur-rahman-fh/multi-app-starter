@@ -26,7 +26,7 @@ npx pnpm@9.15.0 check
 # or: make check
 ```
 
-This matches the static checks in CI (`codebase-quality` job): format, lint, typecheck, Vitest, Next builds, and Ruff for the backend.
+This matches CI **codebase-quality** (format, lint, typecheck, Vitest, Next builds, Ruff). Backend pytest and admin routing smoke run in Docker via `make test` (CI **docker-tests** job) — not part of `pnpm check`.
 
 Auto-fix commands (JS/TS: Prettier formats, ESLint fixes logic/imports — `eslint-config-prettier` disables conflicting rules):
 
@@ -40,7 +40,7 @@ npx pnpm@9.15.0 python:lint:fix
 
 With format-on-save enabled, VS Code/Cursor uses Prettier for layout and ESLint for fixes (see `.vscode/settings.json`).
 
-Full backend + integration tests still require Docker: `make test` (see [`testing.md`](testing.md)).
+Full CI parity: `pnpm check` then `make test` (backend pytest + admin smoke in Docker). See [`testing.md`](testing.md).
 
 Deploying Docker images via a deployment branch uses the same test suite in CI first — see [`runbook-docker-deploy.md`](runbook-docker-deploy.md).
 

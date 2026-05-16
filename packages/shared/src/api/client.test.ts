@@ -1,10 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { USER_MESSAGES } from './errors';
-import { getJson } from './client';
+import { getApiBaseUrl, getJson } from './client';
+
+describe('getApiBaseUrl', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('returns configured URL when set', () => {
+    vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'https://api.example.com');
+    expect(getApiBaseUrl()).toBe('https://api.example.com');
+  });
+
+  it('throws in production when unset', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', '');
+    expect(() => getApiBaseUrl()).toThrow(/NEXT_PUBLIC_API_BASE_URL/);
+  });
+});
 
 describe('getJson', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 

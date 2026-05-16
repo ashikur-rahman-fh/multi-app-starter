@@ -45,12 +45,28 @@ Checklist:
 - Redis is healthy
 - `REDIS_URL` matches the compose service hostname (`redis` in dev, `redis-test` in test)
 
+## 502 Bad Gateway on `/api/` (dev Nginx)
+
+Symptoms: browser or `curl http://localhost:8080/api/hello/` returns **502**; frontend may show network errors.
+
+Fix:
+
+1. Check backend logs: `bash infra/scripts/dev/logs.sh` or `make dev-logs`
+2. **ImportError on startup** (e.g. `cannot import name 'throttle_scope'`): fix the Python error in `apps/backend` — Django never listens on `:8000`, so Nginx has no upstream
+3. **Database / axes errors** (`relation "axes_accessattempt" does not exist`): run `make backend-migrate`
+4. After dependency or Dockerfile changes: `make dev-down && make dev-up` (rebuild)
+5. Verify:
+   - `curl -s http://localhost:8000/api/health/` → `{"status":"ok"}`
+   - `curl -s http://localhost:8080/api/hello/` → JSON hello message
+
 ## Frontend cannot reach backend
 
 Checklist:
 
 - `NEXT_PUBLIC_API_BASE_URL` points to a URL reachable **from the browser** (not `http://backend:8000` unless you truly intend that)
-- In Docker dev, prefer `http://localhost:8000` for browser-based access
+- **Docker dev via Nginx (`http://localhost:8080`)**: set `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` so `/api/*` is proxied by Nginx (recommended; `docker-compose.dev.yml` sets this for frontend containers)
+- **Direct Next on `:3000` / `:3001`**: use `http://localhost:8000` or still use `http://localhost:8080` for the API
+- After changing `NEXT_PUBLIC_*`, restart frontend containers (`make dev-down && make dev-up`)
 
 ## CORS issues
 
@@ -60,6 +76,49 @@ Fix:
 
 - Ensure `CORS_ALLOWED_ORIGINS` includes the exact browser origin (scheme + host + port)
 - Include Nginx origin if you browse via `http://localhost:8080`
+- Production requires `https://` origins only in `CORS_ALLOWED_ORIGINS` / `CSRF_TRUSTED_ORIGINS` (no `http://127.0.0.1` or `http://backend`)
+- Deploy health checks use `ALLOWED_HOSTS` and `HEALTH_CHECK_HTTP_HOST`, not CORS/CSRF trusted origins
+- `CORS_ALLOW_CREDENTIALS` is `false`; do not send cookies on cross-origin API calls unless you add CSRF-aware session auth
+
+## CSRF issues
+
+Symptoms: `403 Forbidden` on POST/PUT from the browser with CSRF failure.
+
+Fix:
+
+- Add the browser origin to `CSRF_TRUSTED_ORIGINS` (scheme + host + port)
+- For Django admin or session forms, include the CSRF token (`csrftoken` cookie + `X-CSRFToken` header or form field)
+
+## Rate limiting (429)
+
+Symptoms: API returns `429 Too Many Requests` or Nginx access log shows `limiting requests`.
+
+Fix:
+
+- DRF throttles: tune `DRF_THROTTLE_ANON` / `DRF_THROTTLE_API` in `.env`
+- `/api/health/` is exempt from DRF throttling (deploy checks should keep working)
+- Nginx edge limits: see `infra/nginx/snippets/rate-limit.conf` (prod) or `rate-limit-dev.conf` (dev). Prod uses real client IPs from Cloudflare (`real-ip-cloudflare.conf`); ensure traffic reaches Nginx only via Cloudflare
+- Clear throttle counters by waiting for the window to expire, or flush Redis if needed
+
+## Django admin lockout (django-axes)
+
+Symptoms: `403` on `/admin/login/` after repeated failed attempts.
+
+Fix:
+
+- Wait for `AXES_COOLOFF_MINUTES` (default 30) or raise `AXES_FAILURE_LIMIT` in non-production
+- Reset via Django shell: `python manage.py axes_reset` (if installed) or flush axes keys in Redis cache
+- Ensure legitimate traffic is not sharing one NAT IP with attackers
+
+## CSP violations
+
+Symptoms: browser console reports Content-Security-Policy blocks; admin styles/scripts break.
+
+Fix:
+
+- Set `CSP_REPORT_ONLY=true` on staging to collect reports without blocking
+- Django admin CSP is in `config/settings/security.py`; API routes under `/api/` are excluded
+- Next.js CSP is in `packages/shared/src/security/headers.mjs` — tightening may require nonce-based scripts
 
 ## Migration issues
 

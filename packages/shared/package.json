@@ -12,7 +12,8 @@
     "./components/LoadingState": "./src/components/LoadingState.tsx",
     "./components/ErrorState": "./src/components/ErrorState.tsx",
     "./types/api": "./src/types/api.ts",
-    "./constants/routes": "./src/constants/routes.ts"
+    "./constants/routes": "./src/constants/routes.ts",
+    "./security/headers": "./src/security/headers.mjs"
   },
   "peerDependencies": {
     "react": "^18.3.1",

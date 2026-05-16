@@ -35,6 +35,18 @@ services:
       - ./apps/backend:/app
     ports:
       - '8000:8000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/')",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,6 +61,8 @@ services:
       - ./infra/env/dev/.env
     environment:
       WATCHPACK_POLLING: 'true'
+      # Browser calls API via dev Nginx (same host as http://localhost:8080)
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
     volumes:
       - .:/workspace
     ports:
@@ -64,7 +78,7 @@ services:
       - ./infra/env/dev/.env
     environment:
       WATCHPACK_POLLING: 'true'
-      NEXT_PUBLIC_BASE_PATH: '/app-admin'
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
     volumes:
       - .:/workspace
     ports:
@@ -79,12 +93,14 @@ services:
     volumes:
       - ./infra/nginx/dev/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/dev/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/nginx/snippets:/etc/nginx/snippets:ro
     ports:
       - '8080:80'
     depends_on:
-      - backend
-      - frontend-main
-      - frontend-admin
+      backend:
+        condition: service_healthy
+      frontend-main:
+        condition: service_started
 
 volumes:
   postgres_dev_data:

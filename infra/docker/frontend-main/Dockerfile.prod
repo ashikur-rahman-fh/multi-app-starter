@@ -13,7 +13,8 @@ ARG NEXT_PUBLIC_API_BASE_URL
 ARG NEXT_PUBLIC_BASE_PATH
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
-RUN pnpm --filter @starter/frontend-main run build
+RUN bash infra/scripts/build/validate-public-api-url.sh "$NEXT_PUBLIC_API_BASE_URL" production \
+  && pnpm --filter @starter/frontend-main run build
 
 FROM node:20-bookworm-slim AS runner
 WORKDIR /app

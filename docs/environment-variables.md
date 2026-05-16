@@ -13,9 +13,29 @@ Values are examples. Generate strong secrets for anything security-sensitive.
 | `DEBUG`                  | Django `DEBUG` flag (`true`/`false`).                               |
 | `SECRET_KEY`             | Django secret key. Must be unique per environment. In production (`config.settings.prod`), placeholder values starting with `change-me` are rejected — set a real value in `infra/env/prod/.env` or the deployment environment. |
 | `DJANGO_SETTINGS_MODULE` | Django settings module path (for example `config.settings.dev`).    |
-| `ALLOWED_HOSTS`          | Comma-separated hostnames Django will accept.                       |
-| `CSRF_TRUSTED_ORIGINS`   | Comma-separated origins trusted for CSRF (include scheme and port). |
-| `CORS_ALLOWED_ORIGINS`   | Comma-separated origins allowed by `django-cors-headers`.           |
+| `ALLOWED_HOSTS`          | Comma-separated hostnames Django accepts in the `Host` header (e.g. public API host, `backend`, `127.0.0.1` for in-container health checks). Separate from CORS/CSRF. |
+| `CSRF_TRUSTED_ORIGINS`   | Comma-separated browser origins trusted for CSRF (scheme + host + port). Production: `https://` only. |
+| `CORS_ALLOWED_ORIGINS`   | Comma-separated browser origins allowed by `django-cors-headers`. Production: `https://` only. |
+
+## Security
+
+| Variable                | Purpose                                                                 |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `DRF_THROTTLE_ANON`     | DRF anonymous throttle rate (default `100/hour`).                       |
+| `DRF_THROTTLE_API`      | DRF scoped API throttle rate (default `200/hour`). `/api/health/` is exempt. |
+| `AXES_FAILURE_LIMIT`    | Failed Django admin logins before lockout (default `5`).                |
+| `AXES_COOLOFF_MINUTES`  | Admin lockout duration in minutes (default `30`).                         |
+| `DATA_UPLOAD_MAX_BYTES` | Django in-memory upload cap in bytes (default `2621440` / 2.5 MiB).     |
+| `DATA_UPLOAD_MAX_FIELDS`| Max form fields per request (default `1000`).                           |
+| `CLIENT_MAX_BODY_SIZE`  | Nginx `client_max_body_size` (default `25m`; used when rendering prod nginx config). |
+| `CSP_REPORT_ONLY`       | When `true`, Django CSP runs in report-only mode (useful on staging).   |
+| `CSP_REPORT_URI`        | Optional CSP violation report endpoint URL.                           |
+
+Nginx also applies per-IP rate limits at the edge (`infra/nginx/snippets/`). With Cloudflare in front, prod Nginx restores the client IP from `CF-Connecting-IP` before rate limiting. Health checks use a dedicated location with higher burst limits.
+
+**Next.js CSP:** `NEXT_PUBLIC_API_BASE_URL` is included in the frontend `connect-src` directive at build time (see `packages/shared/src/security/headers.mjs`).
+
+**CSRF cookie (production):** `CSRF_COOKIE_HTTPONLY=True` prevents JavaScript from reading `csrftoken`. This is fine for Django admin and today’s stateless `fetch` calls. If Next apps later use cookie/session auth, provide CSRF via a server route/BFF, or consciously set `CSRF_COOKIE_HTTPONLY=False` (weaker; requires `SameSite` + HTTPS).
 
 ## PostgreSQL
 
@@ -38,8 +58,8 @@ Values are examples. Generate strong secrets for anything security-sensitive.
 | Variable                   | Purpose                                                                                                                                                         |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BACKEND_URL`              | Canonical backend base URL for documentation / non-Next consumers.                                                                                              |
-| `NEXT_PUBLIC_API_BASE_URL` | Browser-accessible API base URL used by `@starter/shared` fetch helpers.                                                                                        |
-| `NEXT_PUBLIC_BASE_PATH`    | Next `basePath` for the **admin** app when served under a path prefix (dev Nginx uses `/app-admin`). Usually empty in production when using separate hostnames. |
+| `NEXT_PUBLIC_API_BASE_URL` | Browser-accessible API base URL used by `@starter/shared` fetch helpers. **Production:** must be `https://` and your public API hostname (e.g. `https://api.starter.com`, same as `API_HOST`). Never use `http://backend:8000`, `localhost`, or dev ports — CI and Docker builds reject those. Included in frontend CSP `connect-src` at build time. |
+| `NEXT_PUBLIC_BASE_PATH`    | Optional Next `basePath` for the **admin** app when using path-based routing. Leave empty in default dev (`:3001/`) and production (separate hostnames). |
 
 ## Hostname documentation fields
 

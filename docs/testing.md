@@ -2,73 +2,66 @@
 
 ## What runs where
 
-| Suite               | Runner                              | Location                                      |
-| ------------------- | ----------------------------------- | --------------------------------------------- |
-| Backend unit        | pytest                              | `apps/backend/tests` (excludes `integration`) |
-| Backend integration | pytest (`@pytest.mark.integration`) | `apps/backend/tests/integration`              |
-| Frontend main       | Vitest                              | `apps/frontend-main/HomePage.test.tsx`        |
-| Frontend admin      | Vitest                              | `apps/frontend-admin/AdminHomePage.test.tsx`  |
-| Shared package      | Vitest                              | `packages/shared/src/**/*.test.*`             |
+| Suite               | Where (CI / local)                    | Command / job                                      |
+| ------------------- | ------------------------------------- | -------------------------------------------------- |
+| Format, lint, types | Host                                  | `pnpm check` / CI **codebase-quality**             |
+| Vitest (all apps)   | Host                                  | `pnpm test` / CI **codebase-quality**              |
+| Next prod builds    | Host                                  | `pnpm build` / CI **codebase-quality**             |
+| Backend unit        | Docker (Postgres + Redis)             | `make test` / CI **docker-tests**                  |
+| Backend integration | Docker (Postgres + Redis)             | `make test` / CI **docker-tests**                  |
+| Admin root routing  | Docker (curl smoke)                   | `make test` / CI **docker-tests**                  |
 
-Frontend tests use **MSW** to mock `/api/hello/` in a way that works both locally and in Docker (handlers use `*/api/hello/`).
+Frontend tests use **MSW** to mock `/api/hello/` (handlers use `*/api/hello/`).
 
-## Running tests locally (host)
-
-Requires a working pnpm install:
-
-```bash
-npx pnpm@9.15.0 -r test
-```
-
-Backend pytest on the host requires PostgreSQL/Redis matching `config.settings.test` (by default the Docker-backed URLs in `infra/env/test/.env`). For consistency, prefer Docker tests.
-
-## Running tests via Makefile / Docker (canonical)
-
-Ensure `infra/env/test/.env` exists:
+## Full CI parity locally
 
 ```bash
 cp infra/env/test/.env.example infra/env/test/.env
-make test
+pnpm check          # format, lint, typecheck, Vitest, Next builds, Ruff
+make test           # backend pytest + admin root smoke in Docker
 ```
 
-[`infra/scripts/test/test-all.sh`](../infra/scripts/test/test-all.sh) brings up **postgres-test** and **redis-test** in the background, waits until they accept connections, then runs **`docker compose run --rm --build --no-deps test-runner`** so only the runner’s logs stream to your terminal. It always runs `docker compose down` afterward (including on failure).
+## Running tests via Makefile / Docker
+
+[`infra/scripts/test/test-all.sh`](../infra/scripts/test/test-all.sh):
+
+1. Starts **postgres-test** and **redis-test**, waits for readiness
+2. Runs **`test-runner`** (pytest unit + integration)
+3. Runs **admin root routing smoke** ([`test-smoke-admin.sh`](../infra/scripts/test/test-smoke-admin.sh)) — curls `http://frontend-admin:3001/` inside Compose and asserts the admin home page is reachable
+
+```bash
+make test
+make test-smoke-admin   # smoke only, without pytest
+```
+
+Per-package Docker runners still exist for ad-hoc use (`make test-backend`, `make test-integration`, etc.).
 
 ## Test compose design
 
 [`infra/docker/compose/docker-compose.test.yml`](../infra/docker/compose/docker-compose.test.yml):
 
-- **postgres-test** + **redis-test** use healthchecks; `test-all.sh` additionally probes readiness before the runner starts.
-- **test-runner** (Python + Node image) is started with `compose run` once dependencies are up.
-- The runner script executes, in order:
-  - `pytest -m "not integration"`
-  - Vitest for `frontend-main`
-  - Vitest for `frontend-admin`
-  - Vitest for `shared`
-  - `pytest -m integration`
+- **postgres-test** + **redis-test** — healthchecks; `test-all.sh` probes readiness before the runner
+- **test-runner** — runs [`test-runner.sh`](../infra/scripts/test/test-runner.sh): pytest unit, then integration
+
+Admin routing smoke uses [`docker-compose.smoke.yml`](../infra/docker/compose/docker-compose.smoke.yml) (separate stack: `frontend-admin` + one-shot `curl`).
 
 ## GitHub Actions
 
 ### Pull requests and `master` — [`.github/workflows/basic-ci.yml`](../.github/workflows/basic-ci.yml)
 
-Two jobs run on every push to `master` and on all pull requests:
-
-| Job                  | What it runs                                                                                                                                                                                                               |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **codebase-quality** | `pnpm format:check`, Ruff format/lint, `pnpm typecheck`, `pnpm lint`, `pnpm test`, production build for **frontend-main** and **frontend-admin** (`.next/BUILD_ID` verified), dependency audit                          |
-| **docker-tests**     | Copies `infra/env/test/.env.example` → `infra/env/test/.env`, then `bash infra/scripts/test/test-all.sh` (same as `make test`)                                                                                             |
-
-The Docker **test-runner** also runs static quality gates (format, lint, typecheck) before pytest and Vitest.
+| Job                  | What it runs                                                                                                                                                          |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **codebase-quality** | Prettier, Ruff, ESLint, typecheck, Vitest, Next production builds, dependency audit                                                                                   |
+| **docker-tests**     | After quality passes: `test-all.sh` — backend pytest + admin root routing smoke                                                                                       |
 
 ### Deployment branches — [`.github/workflows/docker-deploy-branches.yml`](../.github/workflows/docker-deploy-branches.yml)
 
-Runs when you push `staging_*` or `release_*` deployment branches. Jobs: validate → test → frontend production builds → build/push images → **deploy to VM** (DB backup, pull exact tag, `compose up --no-build`, health checks). See **[runbook-docker-deploy.md](runbook-docker-deploy.md)**.
+Runs on `staging_*` / `release_*`: validate → `test-all.sh` (pytest + admin smoke) → frontend production builds (real `NEXT_PUBLIC_API_BASE_URL`) → build/push → deploy. See [runbook-docker-deploy.md](runbook-docker-deploy.md).
 
-### Pre-PR command (host)
-
-For fast feedback without Docker:
+## Pre-PR quick check (host only)
 
 ```bash
 npx pnpm@9.15.0 check
 ```
 
-This does **not** run backend pytest. Use `make test` for the full suite including Postgres/Redis integration tests.
+Does **not** run backend pytest or admin smoke. Add `make test` before merging if you changed routing, Django models, migrations, or integration tests.

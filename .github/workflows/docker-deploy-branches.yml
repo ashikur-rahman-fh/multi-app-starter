@@ -55,7 +55,7 @@ jobs:
     name: Run full test suite
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -63,11 +63,11 @@ jobs:
       - name: Copy test environment file
         run: cp infra/env/test/.env.example infra/env/test/.env
 
-      # Same entrypoint as basic-ci.yml docker-tests and `make test`.
+      # Backend pytest + admin root routing smoke in Docker. Static checks + Vitest are not repeated here.
       - name: Run tests (Docker Compose)
         run: bash infra/scripts/test/test-all.sh
 
-  # Mirrors basic-ci.yml codebase-quality production builds — catches Next.js compile
+  # Production Next builds with Environment API URL — not duplicated from basic-ci placeholders.
   # failures before spending time on Docker image builds.
   frontend-production-build:
     name: Verify frontend production builds
@@ -80,11 +80,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Verify NEXT_PUBLIC_API_BASE_URL is set
-        run: |
-          if [[ -z "${{ vars.NEXT_PUBLIC_API_BASE_URL }}" ]]; then
-            echo "::error::Variable NEXT_PUBLIC_API_BASE_URL is not set in GitHub Environment '${{ needs.validate.outputs.github_environment }}'."
-            exit 1
-          fi
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+        run: bash infra/scripts/build/validate-public-api-url.sh
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -172,6 +170,11 @@ jobs:
           if [[ "${{ matrix.needs_frontend_args }}" == "true" && -z "${{ vars.NEXT_PUBLIC_API_BASE_URL }}" ]]; then
             echo "::error::Variable NEXT_PUBLIC_API_BASE_URL is required to build frontend images."
             missing=1
+          fi
+
+          if [[ "$missing" -eq 0 && "${{ matrix.needs_frontend_args }}" == "true" ]]; then
+            NEXT_PUBLIC_API_BASE_URL="${{ vars.NEXT_PUBLIC_API_BASE_URL }}" \
+              bash infra/scripts/build/validate-public-api-url.sh
           fi
 
           if [[ "$missing" -ne 0 ]]; then

@@ -1,7 +1,17 @@
 import { ApiError, isApiErrorBody, mapHttpStatusToMessage, USER_MESSAGES } from './errors';
 
 export function getApiBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+  const configured = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (configured) {
+    return configured;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'NEXT_PUBLIC_API_BASE_URL was not set at build time. Rebuild the frontend with your public https API URL (e.g. https://api.example.com).',
+    );
+  }
+  // Host-side next dev without .env — prefer dev Nginx entrypoint
+  return 'http://localhost:8080';
 }
 
 async function parseErrorResponse(response: Response): Promise<{

@@ -78,6 +78,7 @@ services:
     volumes:
       - ./infra/nginx/prod/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./infra/nginx/prod/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/nginx/snippets:/etc/nginx/snippets:ro
       - ./infra/nginx/prod/certs:/etc/nginx/certs:ro
     ports:
       - '443:443'

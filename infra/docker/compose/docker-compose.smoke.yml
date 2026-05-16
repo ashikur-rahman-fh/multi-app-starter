@@ -1,0 +1,19 @@
+name: starter-smoke
+
+services:
+  frontend-admin:
+    build:
+      context: .
+      dockerfile: infra/docker/frontend-admin/Dockerfile.dev
+    environment:
+      WATCHPACK_POLLING: 'true'
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+
+  smoke-admin-root:
+    image: curlimages/curl:8.5.0
+    depends_on:
+      frontend-admin:
+        condition: service_started
+    volumes:
+      - ./infra/scripts/test/smoke-admin-root.sh:/smoke.sh:ro
+    entrypoint: ['/bin/sh', '/smoke.sh']
