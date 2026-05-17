@@ -4,11 +4,19 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from .app_metadata import APP_METADATA
+
 
 @api_view(["GET"])
 @throttle_classes([])
 def health(request):
     return Response({"status": "ok"})
+
+
+@api_view(["GET"])
+@throttle_classes([])
+def public_meta(request):
+    return Response(APP_METADATA)
 
 
 class HelloView(APIView):

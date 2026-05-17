@@ -7,7 +7,7 @@ This starter is a **multi-container** system orchestrated by Docker Compose, wit
 ### Backend (`apps/backend`)
 
 - **Framework**: Django + Django REST Framework
-- **Public API** (custom): `GET /api/health/`, `GET /api/hello/`
+- **Public API** (custom): `GET /api/health/`, `GET /api/hello/`, `GET /api/public/meta/`
 - **API errors**: JSON envelope with `success: false` and `error.code`, `error.message`, `error.details` (safe messages only; no stack traces)
 - **Admin UI**: Django’s built-in admin at `/admin/` (no custom admin APIs)
 - **Data**: PostgreSQL via `DATABASES`

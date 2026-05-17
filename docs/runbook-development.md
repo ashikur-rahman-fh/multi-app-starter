@@ -43,7 +43,7 @@ make backend-migrate
 3. Add tests under `apps/backend/tests/`.
 4. Run `make test-backend` (or `make test`).
 
-Keep public API surface intentional; this starter only ships `/api/health/` and `/api/hello/` as examples.
+Keep public API surface intentional; this starter ships `/api/health/`, `/api/hello/`, and `/api/public/meta/` as examples. Release metadata lives in `apps/backend/api/app_metadata.py` (see [development.md](development.md#release-metadata)).
 
 ## Add a frontend page
 

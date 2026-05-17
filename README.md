@@ -207,7 +207,7 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md)
-- [`docs/development.md`](docs/development.md)
+- [`docs/development.md`](docs/development.md) — includes [release metadata](docs/development.md#release-metadata) (`GET /api/public/meta/`)
 - [`docs/testing.md`](docs/testing.md)
 - [`docs/deployment.md`](docs/deployment.md)
 - [`docs/runbook-development.md`](docs/runbook-development.md)

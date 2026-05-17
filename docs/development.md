@@ -114,6 +114,38 @@ make backend-makemigrations
 make backend-createsuperuser
 ```
 
+## Release metadata
+
+Public release information is served by **`GET /api/public/meta/`**. Values come from source-controlled code in [`apps/backend/api/app_metadata.py`](../apps/backend/api/app_metadata.py), not deployment environment variables. That keeps version updates intentional, reviewable, and tied to the code being deployed.
+
+**Update before each release:**
+
+1. Edit `APP_METADATA` in `app_metadata.py` (`version`, `releaseDate`, optional `releaseLabel`).
+2. Run format and tests (see [Code quality (before PR)](#code-quality-before-pr)).
+3. Verify the endpoint, for example: `curl -s http://localhost:8080/api/public/meta/`
+
+**Example response:**
+
+```json
+{
+  "appName": "Starter App",
+  "version": "1.0.0",
+  "releaseDate": "2026-05-16",
+  "releaseLabel": "Latest Release"
+}
+```
+
+Only expose public-safe fields in this endpoint (no commit SHA, build timestamps, hostnames, environment names, secrets, or infrastructure details).
+
+### Release checklist
+
+Before creating a release branch or deployment:
+
+- [ ] Update `version` and `releaseDate` in `apps/backend/api/app_metadata.py`
+- [ ] Update `releaseLabel` if needed
+- [ ] Run `npx pnpm@9.15.0 python:format` and `make test` (or `make test-backend`)
+- [ ] Confirm `GET /api/public/meta/` returns the expected JSON
+
 ## Shared package workflow
 
 The shared library lives in `packages/shared` and is consumed via workspace protocol:
