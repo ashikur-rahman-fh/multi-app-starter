@@ -9,7 +9,9 @@ type AsyncState<T> =
 
 export function useApi<T>(loader: () => Promise<T>) {
   const loaderRef = useRef(loader);
-  loaderRef.current = loader;
+  useEffect(() => {
+    loaderRef.current = loader;
+  }, [loader]);
 
   const requestIdRef = useRef(0);
   const mountedRef = useRef(true);

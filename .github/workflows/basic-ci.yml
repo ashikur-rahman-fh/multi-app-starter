@@ -81,29 +81,7 @@ jobs:
           echo "frontend-admin BUILD_ID=$(cat "$ADMIN_BUILD_ID")"
 
       - name: Dependency audit
-        run: |
-          pnpm audit --audit-level=high --json > audit.json || audit_exit=$?
-          if [[ "${audit_exit:-0}" -ne 0 ]]; then
-            node <<'NODE'
-          const fs = require("fs");
-          const report = JSON.parse(fs.readFileSync("audit.json", "utf8"));
-          const advisories = Object.values(report.advisories || {});
-          const blocking = advisories.filter((advisory) => {
-            if (advisory.severity !== "high" && advisory.severity !== "critical") {
-              return false;
-            }
-            const paths = (advisory.findings || []).flatMap((finding) => finding.paths || []);
-            return !paths.every((path) => path.includes("next@"));
-          });
-          if (blocking.length > 0) {
-            console.error(`Found ${blocking.length} high/critical vulnerabilities outside Next.`);
-            process.exit(1);
-          }
-          console.log(
-            "High audit: only Next 14.x advisories remain (full remediation requires Next 15+).",
-          );
-          NODE
-          fi
+        run: pnpm audit --audit-level=high
 
   # Backend pytest only — needs Postgres/Redis from test compose (not run on host in CI).
   docker-tests:

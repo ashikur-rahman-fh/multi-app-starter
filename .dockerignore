@@ -12,8 +12,9 @@ coverage
 .DS_Store
 
 # env files
-infra/env/**/.env
-!infra/env/**/.env.example
+**/.env
+**/.env.*
+!**/.env.example
 
 # production certificates
 infra/nginx/prod/certs/*

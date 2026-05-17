@@ -1,6 +1,7 @@
 node_modules
 .pnpm-store
 .next
+next-env.d.ts
 dist
 out
 build
@@ -11,7 +12,9 @@ yarn.lock
 bun.lockb
 
 # Environment and secrets
-infra/env/**/.env
+**/.env
+**/.env.*
+!**/.env.example
 *.key
 *.crt
 *.pem
