@@ -27,7 +27,7 @@ make dev-up
 ## Daily workflow
 
 - Start: `make dev-up` (detached; no log stream in that shell)
-- Logs (backend): `make dev-logs` (or `docker compose ... logs -f <service>`)
+- Logs (all services): `make dev-logs` (or `docker compose ... logs -f <service>` for one service)
 - Stop: `make dev-down`
 - Tests before pushing: `make test`
 - Deploying via branch (build/push Docker images): see [runbook-docker-deploy.md](runbook-docker-deploy.md)

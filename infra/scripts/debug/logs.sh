@@ -2,4 +2,4 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT"
-docker compose --project-directory "$ROOT" -f infra/docker/compose/docker-compose.debug.yml logs -f backend
+docker compose --project-directory "$ROOT" -f infra/docker/compose/docker-compose.debug.yml logs -f

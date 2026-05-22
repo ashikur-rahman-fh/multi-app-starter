@@ -13,14 +13,9 @@ backend_wait_for_postgres_healthy() {
 
   echo "==> Waiting for postgres to be healthy (up to ${max_wait}s)"
   while [[ "$elapsed" -lt "$max_wait" ]]; do
-    if compose ps --status running --services 2>/dev/null | grep -qx postgres; then
-      health=$(compose inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' postgres 2>/dev/null || echo "unknown")
-      if [[ "$health" == "healthy" || "$health" == "none" ]]; then
-        if compose exec -T postgres sh -c 'pg_isready -q -U "$POSTGRES_USER" -d "$POSTGRES_DB"' 2>/dev/null; then
-          echo "==> Postgres is ready"
-          return 0
-        fi
-      fi
+    if compose exec -T postgres sh -c 'pg_isready -q -U "$POSTGRES_USER" -d "$POSTGRES_DB"' 2>/dev/null; then
+      echo "==> Postgres is ready"
+      return 0
     fi
     sleep "$interval"
     elapsed=$((elapsed + interval))
@@ -28,6 +23,7 @@ backend_wait_for_postgres_healthy() {
 
   echo "::error::Postgres did not become ready within ${max_wait}s." >&2
   compose ps postgres 2>/dev/null || true
+  compose logs postgres --tail 20 2>/dev/null || true
   return 1
 }
 
