@@ -9,7 +9,7 @@ Each script runs Docker Compose with:
 
 | Area     | Scripts                                                                                                                             |
 | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `dev/`   | Start/stop/logs/restart development stack; Django migrate/makemigrations/check-migrations/superuser/shell; `editor-happy.sh` (local editor deps) |
+| `dev/`   | Start/stop/logs/restart development stack; Django migrate/makemigrations/check-migrations/superuser/shell; `editor-happy.sh` (host editor deps); `install-js.sh` (Linux `node_modules` for Docker bind mounts — `make dev-install-js`) |
 | `deploy/` | VM deploy, backup, health checks, **backend release tasks** (migrate + collectstatic before restart) |
 | `debug/` | Same for [`infra/docker/compose/docker-compose.debug.yml`](../docker/compose/docker-compose.debug.yml) (debugpy enabled on backend) |
 | `test/`  | Full suite and per-package runners (via `test-runner` service)                                                                      |

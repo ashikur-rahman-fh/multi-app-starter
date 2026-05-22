@@ -10,11 +10,13 @@ cp infra/env/dev/.env.example infra/env/dev/.env
 cp infra/env/test/.env.example infra/env/test/.env
 ```
 
-3. Install JS deps (optional but recommended for editor tooling):
+3. Install JS deps for Docker (required on macOS; safe on all platforms):
 
 ```bash
-npx pnpm@9.15.0 install
+make dev-install-js
 ```
+
+For VS Code/Cursor and local `pnpm check`, also run `make editor-happy` (host deps). On macOS, run `make dev-install-js` again before Docker dev after `editor-happy`.
 
 4. Start dev stack:
 

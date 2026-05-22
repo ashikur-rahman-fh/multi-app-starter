@@ -28,6 +28,37 @@ make editor-happy
 
 See [`development.md`](development.md#fixing-editor-importpackage-errors) for manual setup and other editor issues.
 
+## Frontend build error: lightningcss.linux-arm64-gnu.node (Docker on Mac)
+
+Symptoms:
+
+- `make dev-logs` shows `Error: Cannot find module '../lightningcss.linux-arm64-gnu.node'` from `frontend-main` (or `frontend-admin` when CSS compiles)
+- Browser `http://localhost:8080/` returns **500** with a PostCSS / `globals.css` build error
+- Secondary HMR / “module factory is not available” messages in the browser (usually clear after the server fix + hard refresh)
+
+Cause: Dev Compose bind-mounts the repo. `make editor-happy` (or host `pnpm install`) installs **macOS** native optional deps; Linux containers need **linux-arm64-gnu** (or x64) binaries for Tailwind v4 / `lightningcss`.
+
+Fix (from repo root):
+
+```bash
+make dev-install-js
+make dev-up
+# or: make dev-restart
+```
+
+Debug stack: `make debug-install-js` then `make debug-up` / `make debug-restart`.
+
+**Production:** normal prod builds do not mount host `node_modules`; this mismatch does not occur in CI or [`Dockerfile.prod`](../infra/docker/frontend-main/Dockerfile.prod) deploys.
+
+If it persists:
+
+- `make dev-build` (rebuild images), then `make dev-install-js` again
+- Confirm container arch: `docker compose --project-directory "$(pwd)" -f infra/docker/compose/docker-compose.dev.yml exec frontend-main uname -m` → `aarch64` on Apple Silicon
+- Avoid running host `pnpm dev` alongside Docker (recreates macOS `.next` / deps)
+- Hard-refresh the browser (`Cmd+Shift+R`) after the server is healthy
+
+See [`development.md`](development.md#docker-js-dependencies-macos--bind-mounts).
+
 ## Port already in use
 
 Symptoms: Compose fails binding `3000`, `3001`, `8000`, `8080`, `5432`, `6379`, or `5678`.

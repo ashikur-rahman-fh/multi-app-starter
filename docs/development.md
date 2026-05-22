@@ -6,15 +6,22 @@
 - Node 20+ and Python 3.12+ for local editor tooling (Docker remains the runtime source of truth for apps)
 - On Debian/Ubuntu, the host `python3` used for editor setup needs the matching **`python3.X-venv`** package (e.g. `python3.12-venv` or `python3.14-venv` for whatever `python3 --version` reports). Without it, `python3 -m venv` can create `apps/backend/.venv` with no `pip`
 
-### Editor setup (one command)
+### Setup after clone
 
-After cloning, run from the **repository root**:
+**Docker dev** (required on macOS before first `make dev-up`):
+
+```bash
+make dev-install-js
+make dev-up
+```
+
+**Editor / local quality checks** (optional but recommended):
 
 ```bash
 make editor-happy
 ```
 
-Then open the repo root in VS Code/Cursor and run **Developer: Reload Window**. This installs `node_modules`, creates `apps/backend/.venv`, and installs Python dev dependencies. Safe to re-run anytime.
+Then open the repo root in VS Code/Cursor and run **Developer: Reload Window**. `editor-happy` installs host `node_modules` and `apps/backend/.venv`. On macOS, run `make dev-install-js` again before Docker dev so native JS binaries match Linux containers. See [Docker JS dependencies](#docker-js-dependencies-macos--bind-mounts).
 
 See [Fixing editor import/package errors](#fixing-editor-importpackage-errors) if squiggles remain.
 
@@ -90,6 +97,8 @@ Regular development:
 ```bash
 make dev-up
 ```
+
+On **macOS** (and other hosts where Docker runs Linux but you may install deps on the host), run `make dev-install-js` once before the first `make dev-up`, and again after `make editor-happy`. See [Docker JS dependencies (macOS / bind mounts)](#docker-js-dependencies-macos--bind-mounts).
 
 Debug development (Django under debugpy):
 
@@ -255,6 +264,40 @@ See the root [`README.md`](../README.md) Makefile table.
 
 See [`runbook-development.md`](runbook-development.md#debug-django-with-vs-code) for the step-by-step attach flow.
 
+## Docker JS dependencies (macOS / bind mounts)
+
+Dev and debug Compose bind-mount the repo (`.:/workspace`), so frontends use **host** `node_modules`. Native packages (Tailwind’s `lightningcss`, `@tailwindcss/oxide`, etc.) must match the **Linux** container, not macOS.
+
+### Symptoms
+
+- `Cannot find module '../lightningcss.linux-arm64-gnu.node'` in `make dev-logs`
+- `http://localhost:8080/` returns **500** with a CSS / PostCSS build error
+
+### Fix
+
+```bash
+make dev-install-js
+make dev-up
+# or, if the stack is already up:
+make dev-restart
+```
+
+For the debug stack: `make debug-install-js` then `make debug-up` (or `make debug-restart`).
+
+This does **not** affect production: prod images install and build entirely inside Linux with no host `node_modules` mount.
+
+### Host vs Docker tooling
+
+| Goal | Command |
+|------|---------|
+| Run frontends in Docker (macOS) | `make dev-install-js` then `make dev-up` |
+| VS Code/Cursor + local `pnpm check` on the host | `make editor-happy` |
+| Both | `make editor-happy`, then `make dev-install-js` before `make dev-up` |
+
+Do not run `make editor-happy` immediately before Docker dev on Apple Silicon without re-running `make dev-install-js` — host installs pull darwin binaries that Linux containers cannot load.
+
+More detail: [`runbook-troubleshooting.md`](runbook-troubleshooting.md#frontend-build-error-lightningcsslinux-arm64-gnunode-docker-on-mac).
+
 ## Fixing editor import/package errors
 
 ### Quick fix
@@ -308,3 +351,4 @@ Select interpreter: **Python: Select Interpreter** → `apps/backend/.venv`.
 | `make editor-happy`: `apps/backend/.venv/bin/pip: No such file or directory` (or script says pip is not available) | Install `python3.X-venv` for your `python3` version, `rm -rf apps/backend/.venv`, re-run `make editor-happy`. See [runbook-troubleshooting.md](runbook-troubleshooting.md#editor-setup-fails-missing-pip)                                                                                                                                                                  |
 | `.next/types` warnings                                                   | Run `pnpm dev` once in a frontend app, or ignore until first dev session                                                                                                                                                                                                                                     |
 | Wrong workspace                                                          | Close folder and re-open the **monorepo root**                                                                                                                                                                                                                                                               |
+| Docker frontend **500**, `lightningcss.linux-arm64-gnu.node` in logs     | `make dev-install-js` then `make dev-up` or `make dev-restart` — see [Docker JS dependencies](#docker-js-dependencies-macos--bind-mounts)                                                                                                                                                                   |

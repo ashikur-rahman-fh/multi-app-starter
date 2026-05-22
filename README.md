@@ -40,17 +40,26 @@ docs/                     Architecture + runbooks
 - Docker + Docker Compose v2
 - Node 20+ and Python 3.12+ for local editor tooling (Docker is the source of truth for running apps)
 
-### Editor setup (recommended after clone)
+### Setup after clone
 
 From the **repository root**:
+
+**Docker dev** (recommended on macOS — installs Linux-native `node_modules` for bind mounts):
+
+```bash
+make dev-install-js
+make dev-up
+```
+
+**Editor / local `pnpm check`** (host `node_modules` + Python venv for VS Code/Cursor):
 
 ```bash
 make editor-happy
 ```
 
-Then open the repo in VS Code/Cursor and run **Developer: Reload Window**. This installs JS workspace dependencies and the Python virtualenv at `apps/backend/.venv`. Safe to re-run.
+Then open the repo in VS Code/Cursor and run **Developer: Reload Window**. Safe to re-run either command.
 
-`make editor-happy` is also required for [`docker-compose.dev.yml`](infra/docker/compose/docker-compose.dev.yml) / [`docker-compose.debug.yml`](infra/docker/compose/docker-compose.debug.yml) Node bind mounts (local `node_modules`).
+Dev Compose mounts the repo into containers ([`docker-compose.dev.yml`](infra/docker/compose/docker-compose.dev.yml)), so `node_modules` must match the **container OS** (Linux), not only the host. On macOS, run `make dev-install-js` before `make dev-up`. If you run `make editor-happy` for the IDE, run `make dev-install-js` again before Docker dev. See [`docs/development.md`](docs/development.md#docker-js-dependencies-macos--bind-mounts).
 
 If `make editor-happy` fails (e.g. missing `pip` in the venv), see [`docs/runbook-troubleshooting.md`](docs/runbook-troubleshooting.md#editor-setup-fails-missing-pip). If imports still show errors after a successful run, see [`docs/development.md`](docs/development.md#fixing-editor-importpackage-errors).
 
@@ -197,10 +206,10 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 
 | Area       | Commands                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Editor     | `make editor-happy` (install `node_modules` + Python venv for VS Code/Cursor)                                                              |
+| Editor     | `make editor-happy` (host `node_modules` + Python venv for VS Code/Cursor)                                                                 |
 | Quality    | `make fix-code-quality` (Prettier + ESLint + Ruff auto-fix), `make check-code-quality` (read-only gate, same as `pnpm check`), `make build` (Next.js prod builds) |
-| Dev        | `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-restart`                                                      |
-| Debug      | `make debug-up`, `make debug-down`, `make debug-build`, `make debug-logs`, `make debug-restart`                                            |
+| Dev        | `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-restart`, `make dev-install-js` (Linux `node_modules` for Docker on macOS) |
+| Debug      | `make debug-up`, `make debug-down`, `make debug-build`, `make debug-logs`, `make debug-restart`, `make debug-install-js`                   |
 | Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-check-migrations`, `make backend-createsuperuser`, `make backend-shell` |
 | Tests      | `make test`, `make test-smoke-admin`, `make test-backend`, `make test-frontend-main`, `make test-frontend-admin`, `make test-shared`, `make test-integration` |
 | Prod       | `make prod-up` (local build; runs migrate + collectstatic), `make prod-deploy IMAGE_TAG=…` (registry pull; same release tasks), `make prod-rollback`, `make prod-down`, `make prod-build`, `make prod-logs`, `make prod-restart`, `make prod-migrate`, `make prod-collectstatic`, `make prod-nginx-config` |

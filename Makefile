@@ -1,4 +1,4 @@
-.PHONY: dev-up dev-down dev-build dev-logs dev-restart \
+.PHONY: dev-up dev-down dev-build dev-logs dev-restart dev-install-js debug-install-js \
 	debug-up debug-down debug-build debug-logs debug-restart \
 	backend-shell backend-migrate backend-makemigrations backend-check-migrations backend-createsuperuser \
 	editor-happy build check-code-quality fix-code-quality test test-all test-smoke-admin test-backend test-frontend-main test-frontend-admin test-shared test-integration \
@@ -21,6 +21,12 @@ dev-logs:
 
 dev-restart:
 	bash infra/scripts/dev/restart.sh
+
+dev-install-js:
+	bash infra/scripts/dev/install-js.sh
+
+debug-install-js:
+	COMPOSE_FILE=infra/docker/compose/docker-compose.debug.yml bash infra/scripts/dev/install-js.sh
 
 debug-up:
 	bash infra/scripts/debug/up.sh
