@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { USER_MESSAGES } from '@starter/shared/api/errors';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { HomePage } from './src/app/HomePage';
 import { server } from './vitest.setup';
 
@@ -21,12 +21,22 @@ describe('HomePage', () => {
 
   it('shared Button triggers reload', async () => {
     const user = userEvent.setup();
+    let requestCount = 0;
+    server.use(
+      http.get('*/api/hello/', () => {
+        requestCount += 1;
+        return HttpResponse.json({ message: 'Hello from Django backend' });
+      }),
+    );
+
     render(<HomePage />);
     await screen.findByTestId('hello-message');
+    const countAfterMount = requestCount;
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
     await user.click(screen.getByRole('button', { name: /reload hello/i }));
-    expect(fetchSpy).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(requestCount).toBeGreaterThan(countAfterMount);
+    });
   });
 
   it('shows a safe error message when the API fails', async () => {

@@ -28,12 +28,34 @@ Both apps:
 
 Workspace package `@starter/shared` provides:
 
-- API helpers (`getHello`, `getJson`)
+- **API client layer** — Axios-based, type-safe HTTP in `packages/shared/src/api/` (never import Axios in frontend apps)
+- Preconfigured client: `backendMainApi` for the main Django backend
+- Thin endpoint helpers (`getHello`, future `getHealth`)
 - UI primitives (`Button`, `LoadingState`, `ErrorState`)
 - Hooks (`useApi`)
 - Types and route constants
+- CSP / security headers for Next.js
 
 Exports are declared in `packages/shared/package.json` so imports are stable across local dev, Docker, and CI.
+
+#### Shared API client
+
+```text
+packages/shared/src/api/
+  index.ts              # public barrel (@starter/shared/api)
+  clients/
+    backend-main.ts     # backendMainApi
+  core/
+    create-api-client.ts
+    errors.ts, csrf.ts, env.ts, interceptors.ts, ...
+  hello.ts              # endpoint wrappers
+```
+
+- **Single Axios dependency** lives in `@starter/shared`; both frontends consume clients from here.
+- **Multiple backends**: add `api/clients/backend-secondary.ts` with `createApiClient({ serviceName, baseURL: env.backendSecondaryApiUrl, ... })` and export from `api/index.ts`.
+- **Errors**: Axios failures are normalized to `ApiError` with safe `message` and flags (`isUnauthorized`, `isNetworkError`, etc.). UI code uses `isApiError()` and `getUserFacingMessage()` — never raw `AxiosError`.
+- **CSRF / cookies**: configurable per client (`csrf.enabled`, `withCredentials`); disabled by default on `backendMainApi` until cookie-based auth is added.
+- **Env**: `NEXT_PUBLIC_BACKEND_MAIN_API_URL` (see [`environment-variables.md`](environment-variables.md)).
 
 ### PostgreSQL
 

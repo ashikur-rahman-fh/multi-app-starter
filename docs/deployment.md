@@ -66,7 +66,7 @@ Set `COMPOSE_PROJECT_NAME` in `.env` before the first production deploy and **do
 
 Next.js bakes `NEXT_PUBLIC_*` variables at build time. [`infra/docker/compose/docker-compose.prod.yml`](../infra/docker/compose/docker-compose.prod.yml) passes:
 
-- `NEXT_PUBLIC_API_BASE_URL`
+- `NEXT_PUBLIC_BACKEND_MAIN_API_URL`
 - `NEXT_PUBLIC_BASE_PATH` (usually empty when using host-based routing)
 
 ## Backend process model

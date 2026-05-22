@@ -13,7 +13,7 @@ describe('getHello (MSW)', () => {
   afterAll(() => server.close());
 
   it('returns mocked backend response', async () => {
-    vi.stubEnv('NEXT_PUBLIC_API_BASE_URL', 'http://localhost:8000');
+    vi.stubEnv('NEXT_PUBLIC_BACKEND_MAIN_API_URL', 'http://localhost:8000');
     const body = await getHello();
     expect(body).toEqual({ message: 'Hello from mocked backend' });
   });

@@ -49,7 +49,7 @@ jobs:
 
       - name: Lint
         env:
-          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
+          NEXT_PUBLIC_BACKEND_MAIN_API_URL: https://api.example.test
         run: pnpm lint
 
       - name: Test (Vitest)
@@ -57,12 +57,12 @@ jobs:
 
       - name: Production build (frontend-main)
         env:
-          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
+          NEXT_PUBLIC_BACKEND_MAIN_API_URL: https://api.example.test
         run: pnpm --filter @starter/frontend-main run build
 
       - name: Production build (frontend-admin)
         env:
-          NEXT_PUBLIC_API_BASE_URL: https://api.example.test
+          NEXT_PUBLIC_BACKEND_MAIN_API_URL: https://api.example.test
         run: pnpm --filter @starter/frontend-admin run build
 
       - name: Verify Next.js build artifacts

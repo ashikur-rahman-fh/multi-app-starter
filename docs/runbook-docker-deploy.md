@@ -87,7 +87,7 @@ Push branch → Validate → Tests → Frontend builds → Build/push images →
 | ---- | ------------- |
 | **Validate** | Checks the branch name; picks `staging_env` or `release_env`. |
 | **Test** | Runs the same full test suite as `make test` (backend, frontends, quality checks). |
-| **Verify frontend production builds** | Builds **frontend-main** and **frontend-admin** for production, using `NEXT_PUBLIC_API_BASE_URL` from the GitHub Environment. |
+| **Verify frontend production builds** | Builds **frontend-main** and **frontend-admin** for production, using `NEXT_PUBLIC_BACKEND_MAIN_API_URL` from the GitHub Environment. |
 | **Build and push** | Builds and uploads four images with an **immutable tag** (e.g. `staging-260515-1`). Also pushes `-latest`, but deploy uses the immutable tag only. |
 | **Deploy to VM** | SSH to the environment’s VM, **backup database first**, pull images, `docker compose up -d --no-build`, health checks, update `.current_deployment`. |
 
@@ -200,7 +200,7 @@ For **each** environment, add:
 | ------------- | --------------------- | --------------------- |
 | `DOCKER_REPO` | `myorg/my-starter-app` | `myorg/my-starter-app` |
 | `BRANCH_SLUG` | `staging` | `release` |
-| `NEXT_PUBLIC_API_BASE_URL` | `https://api.staging.example.com` | `https://api.example.com` |
+| `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | `https://api.staging.example.com` | `https://api.example.com` |
 | `NEXT_PUBLIC_BASE_PATH` | *(leave empty)* | *(leave empty)* |
 | `DEPLOY_PATH` | `/opt/multi-app-starter` | `/opt/multi-app-starter` |
 | `COMPOSE_FILE` | `infra/docker/compose/docker-compose.prod.yml` | same |
@@ -212,7 +212,7 @@ For **each** environment, add:
 With [GitHub CLI](https://cli.github.com/) (`gh`), for example:
 
 ```bash
-gh variable set NEXT_PUBLIC_API_BASE_URL --env staging_env --body 'https://api.staging.example.com'
+gh variable set NEXT_PUBLIC_BACKEND_MAIN_API_URL --env staging_env --body 'https://api.staging.example.com'
 gh variable set NEXT_PUBLIC_BASE_PATH --env staging_env --body ''
 gh variable set APP_DOMAIN --env staging_env --body 'api.staging.example.com'
 ```
@@ -225,7 +225,7 @@ Repeat for `release_env` when using production. `NEXT_PUBLIC_BASE_PATH` must be 
 | -------- | ----------- |
 | `DOCKER_REPO` | Yes |
 | `BRANCH_SLUG` | Yes — must be `staging` in `staging_env` and `release` in `release_env` |
-| `NEXT_PUBLIC_API_BASE_URL` | Yes — **public API URL in the browser** (e.g. `https://api.starter.com`), not `http://backend:8000` |
+| `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | Yes — **public API URL in the browser** (e.g. `https://api.starter.com`), not `http://backend:8000` |
 | `DEPLOY_PATH` | Yes — full git clone path on the VM |
 | `COMPOSE_FILE` | Optional — defaults to `infra/docker/compose/docker-compose.prod.yml` |
 | `NEXT_PUBLIC_BASE_PATH` | Optional (usually empty; set only for path-based admin routing in custom deployments) |
@@ -434,7 +434,7 @@ Contact a developer with the link to the failed Actions run if you need help rea
 | “Invalid deployment branch name” | Typo in branch name | Fix naming; see [cheat sheet](#branch-naming-cheat-sheet) |
 | Build job skipped | Tests or frontend builds failed | Fix tests or production build errors first |
 | Login to registry failed | Bad `DOCKER_USERNAME` / token | Update secrets in the correct Environment |
-| Frontend build failed | Missing `NEXT_PUBLIC_API_BASE_URL` | Add variable to Environment |
+| Frontend build failed | Missing `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | Add variable to Environment |
 | Hello/API fetch URL contains `NEXT_PUBLIC_BASE_PATH=` | Docker `build-args` merged into one value (bad `format('\n')` in workflow) | Use multiline `build-args` in `docker-deploy-branches.yml`; rebuild frontend images and redeploy |
 | “Missing env file on the deployment server” | `infra/env/prod/.env` missing **on the VM** at `DEPLOY_PATH` | SSH to `VM_HOST`, `cd` to `DEPLOY_PATH`, run `cp infra/env/prod/.env.example infra/env/prod/.env` and edit |
 | Deploy SSH failed | Wrong `VM_HOST`, key, or port | Fix secrets in correct Environment |
@@ -463,10 +463,10 @@ cp infra/env/test/.env.example infra/env/test/.env
 make test
 ```
 
-Production frontend builds (requires `NEXT_PUBLIC_API_BASE_URL` in your shell or `.env`):
+Production frontend builds (requires `NEXT_PUBLIC_BACKEND_MAIN_API_URL` in your shell or `.env`):
 
 ```bash
-export NEXT_PUBLIC_API_BASE_URL=https://api.staging.example.com   # match your Environment
+export NEXT_PUBLIC_BACKEND_MAIN_API_URL=https://api.staging.example.com   # match your Environment
 make build
 ```
 
@@ -509,7 +509,7 @@ Compose overlay for registry pulls: [`infra/docker/compose/docker-compose.deploy
 | `BRANCH_SLUG` | Variable | `staging` or `release` |
 | `DEPLOY_PATH` | Variable | Repo path on VM |
 | `COMPOSE_FILE` | Variable | Prod compose path |
-| `NEXT_PUBLIC_API_BASE_URL` | Variable | Browser-facing API URL at build time |
+| `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | Variable | Browser-facing API URL at build time |
 | `NEXT_PUBLIC_BASE_PATH` | Variable | Optional Next base path |
 | `BACKUP_DIR` | Variable | Backup directory on VM |
 | `DB_SERVICE_NAME` | Variable | DB service name (default `postgres`) |

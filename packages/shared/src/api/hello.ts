@@ -1,7 +1,7 @@
 import { API_ROUTES } from '../constants/routes';
 import type { HelloResponse } from '../types/api';
-import { getJson } from './client';
+import { backendMainApi } from './clients/backend-main';
 
 export async function getHello(): Promise<HelloResponse> {
-  return getJson<HelloResponse>(API_ROUTES.hello);
+  return backendMainApi.get<HelloResponse>(API_ROUTES.hello);
 }

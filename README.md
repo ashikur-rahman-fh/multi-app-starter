@@ -16,7 +16,7 @@ This repository intentionally avoids authentication, authorization, payments, an
 | DB             | PostgreSQL                                               |
 | Cache          | Redis (`django-redis`)                                   |
 | Web (public)   | Next.js 14 (`apps/frontend-main`, `apps/frontend-admin`) |
-| Shared UI/API  | pnpm workspace package `@starter/shared`                 |
+| Shared UI/API  | pnpm workspace package `@starter/shared` (Axios API client, UI, hooks) |
 | Reverse proxy  | Nginx (`infra/nginx`)                                    |
 | JS tooling     | pnpm workspaces, ESLint, Prettier, TypeScript            |
 | Python tooling | Ruff (lint + format)                                     |
@@ -52,7 +52,7 @@ Then open the repo in VS Code/Cursor and run **Developer: Reload Window**. This 
 
 `make editor-happy` is also required for [`docker-compose.dev.yml`](infra/docker/compose/docker-compose.dev.yml) / [`docker-compose.debug.yml`](infra/docker/compose/docker-compose.debug.yml) Node bind mounts (local `node_modules`).
 
-If imports still show errors, see [`docs/development.md`](docs/development.md#fixing-editor-importpackage-errors).
+If `make editor-happy` fails (e.g. missing `pip` in the venv), see [`docs/runbook-troubleshooting.md`](docs/runbook-troubleshooting.md#editor-setup-fails-missing-pip). If imports still show errors after a successful run, see [`docs/development.md`](docs/development.md#fixing-editor-importpackage-errors).
 
 ## Code quality checks
 
@@ -60,10 +60,16 @@ Before pushing a branch or opening a PR, run the full static quality gate (does 
 
 ```bash
 npx pnpm@9.15.0 check
-# or: make check
+# or: make check-code-quality
 ```
 
-This runs, in order:
+To auto-fix formatting and lint (modifies files — Prettier, ESLint, Ruff):
+
+```bash
+make fix-code-quality
+```
+
+`make check-code-quality` runs, in order:
 
 1. Prettier format check
 2. ESLint (Next apps + `@starter/shared`)
@@ -138,11 +144,11 @@ make backend-createsuperuser
 | **Nginx (recommended)** | http://localhost:8080 — main site, `/api/`, `/admin/` (Django)                       |
 | Main frontend  | http://localhost:3000 (direct) or http://localhost:8080/ (via Nginx)                 |
 | Admin frontend | http://localhost:3001/ (admin home page; dedicated port in dev)                      |
-| Backend API (browser) | http://localhost:8080/api/ via Nginx (`NEXT_PUBLIC_API_BASE_URL`)             |
+| Backend API (browser) | http://localhost:8080/api/ via Nginx (`NEXT_PUBLIC_BACKEND_MAIN_API_URL`)             |
 | Backend API (direct) | http://localhost:8000/api/ (host → container; debugging only)                  |
 | Django admin   | http://localhost:8080/admin/ (Nginx) or http://localhost:8000/admin/               |
 
-**Note:** Django’s admin UI is at `/admin/` on Nginx (`:8080`). The Next admin shell runs on **`:3001/`** so it does not collide with Django. Dev Compose sets `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` for browser API calls via Nginx.
+**Note:** Django’s admin UI is at `/admin/` on Nginx (`:8080`). The Next admin shell runs on **`:3001/`** so it does not collide with Django. Dev Compose sets `NEXT_PUBLIC_BACKEND_MAIN_API_URL=http://localhost:8080` for browser API calls via Nginx.
 
 ## Debug development (Django + debugpy)
 
@@ -196,7 +202,7 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 | Area       | Commands                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Editor     | `make editor-happy` (install `node_modules` + Python venv for VS Code/Cursor)                                                              |
-| Quality    | `make check` (same as `pnpm check`), `make build` (Next.js prod builds for both frontends)                                                 |
+| Quality    | `make fix-code-quality` (Prettier + ESLint + Ruff auto-fix), `make check-code-quality` (read-only gate, same as `pnpm check`), `make build` (Next.js prod builds) |
 | Dev        | `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-restart`                                                      |
 | Debug      | `make debug-up`, `make debug-down`, `make debug-build`, `make debug-logs`, `make debug-restart`                                            |
 | Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-createsuperuser`, `make backend-shell`                                |

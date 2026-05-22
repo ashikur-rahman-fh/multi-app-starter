@@ -7,7 +7,7 @@ services:
       dockerfile: infra/docker/frontend-admin/Dockerfile.dev
     environment:
       WATCHPACK_POLLING: 'true'
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+      NEXT_PUBLIC_BACKEND_MAIN_API_URL: http://localhost:8080
 
   smoke-admin-root:
     image: curlimages/curl:8.5.0

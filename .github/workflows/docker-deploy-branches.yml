@@ -79,10 +79,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify NEXT_PUBLIC_API_BASE_URL is set
+      - name: Verify NEXT_PUBLIC_BACKEND_MAIN_API_URL is set
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
-        run: bash infra/scripts/build/validate-public-api-url.sh
+          NEXT_PUBLIC_BACKEND_MAIN_API_URL: ${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
+        run: bash infra/scripts/build/validate-backend-main-api-url.sh
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -97,13 +97,13 @@ jobs:
 
       - name: Production build (frontend-main)
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_BACKEND_MAIN_API_URL: ${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
           NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
         run: pnpm --filter @starter/frontend-main run build
 
       - name: Production build (frontend-admin)
         env:
-          NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+          NEXT_PUBLIC_BACKEND_MAIN_API_URL: ${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
           NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
         run: pnpm --filter @starter/frontend-admin run build
 
@@ -167,14 +167,14 @@ jobs:
             missing=1
           fi
 
-          if [[ "${{ matrix.needs_frontend_args }}" == "true" && -z "${{ vars.NEXT_PUBLIC_API_BASE_URL }}" ]]; then
-            echo "::error::Variable NEXT_PUBLIC_API_BASE_URL is required to build frontend images."
+          if [[ "${{ matrix.needs_frontend_args }}" == "true" && -z "${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}" ]]; then
+            echo "::error::Variable NEXT_PUBLIC_BACKEND_MAIN_API_URL is required to build frontend images."
             missing=1
           fi
 
           if [[ "$missing" -eq 0 && "${{ matrix.needs_frontend_args }}" == "true" ]]; then
-            NEXT_PUBLIC_API_BASE_URL="${{ vars.NEXT_PUBLIC_API_BASE_URL }}" \
-              bash infra/scripts/build/validate-public-api-url.sh
+            NEXT_PUBLIC_BACKEND_MAIN_API_URL="${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}" \
+              bash infra/scripts/build/validate-backend-main-api-url.sh
           fi
 
           if [[ "$missing" -ne 0 ]]; then
@@ -203,7 +203,7 @@ jobs:
             ${{ vars.DOCKER_REPO }}-${{ matrix.image_suffix }}:${{ vars.BRANCH_SLUG }}-latest
           # One build-arg per line (docker/build-push-action); do not use format('\n').
           build-args: |
-            NEXT_PUBLIC_API_BASE_URL=${{ vars.NEXT_PUBLIC_API_BASE_URL }}
+            NEXT_PUBLIC_BACKEND_MAIN_API_URL=${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
             NEXT_PUBLIC_BASE_PATH=${{ vars.NEXT_PUBLIC_BASE_PATH }}
           cache-from: type=gha,scope=${{ matrix.image_suffix }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image_suffix }}

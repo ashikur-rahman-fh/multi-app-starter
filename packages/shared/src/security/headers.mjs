@@ -1,4 +1,4 @@
-/** Placeholder when NEXT_PUBLIC_API_BASE_URL is unset (e.g. next lint). Real prod builds validate via validate-public-api-url.sh */
+/** Placeholder when NEXT_PUBLIC_BACKEND_MAIN_API_URL is unset (e.g. next lint). Real prod builds validate via validate-backend-main-api-url.sh */
 export const CSP_API_PLACEHOLDER = 'https://api.example.test';
 
 const DEV_CONNECT_ORIGINS = [
@@ -18,7 +18,7 @@ const DEV_CONNECT_ORIGINS = [
  */
 export function buildConnectSrc(options = {}) {
   const production = options.isProduction ?? process.env.NODE_ENV === 'production';
-  let apiBaseUrl = options.apiBaseUrl ?? process.env.NEXT_PUBLIC_API_BASE_URL;
+  let apiBaseUrl = options.apiBaseUrl ?? process.env.NEXT_PUBLIC_BACKEND_MAIN_API_URL;
 
   if (production && !apiBaseUrl?.trim()) {
     apiBaseUrl = CSP_API_PLACEHOLDER;

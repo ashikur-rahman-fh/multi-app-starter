@@ -5,15 +5,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 cd "$ROOT"
 
-export NEXT_PUBLIC_API_BASE_URL="${NEXT_PUBLIC_API_BASE_URL:-https://api.example.test}"
+export NEXT_PUBLIC_BACKEND_MAIN_API_URL="${NEXT_PUBLIC_BACKEND_MAIN_API_URL:-https://api.example.test}"
 
-bash "${ROOT}/infra/scripts/build/validate-public-api-url.sh" "$NEXT_PUBLIC_API_BASE_URL" production
+bash "${ROOT}/infra/scripts/build/validate-backend-main-api-url.sh" "$NEXT_PUBLIC_BACKEND_MAIN_API_URL" production
 
-echo "==> Building @starter/frontend-main (NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL})"
-pnpm --filter @starter/frontend-main run build
+echo "==> Building @starter/frontend-main (NEXT_PUBLIC_BACKEND_MAIN_API_URL=${NEXT_PUBLIC_BACKEND_MAIN_API_URL})"
+npx pnpm@9.15.0 --filter @starter/frontend-main run build
 
 echo "==> Building @starter/frontend-admin"
-pnpm --filter @starter/frontend-admin run build
+npx pnpm@9.15.0 --filter @starter/frontend-admin run build
 
 verify_build() {
   local app_dir="$1"

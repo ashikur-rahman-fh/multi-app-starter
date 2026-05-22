@@ -4,6 +4,7 @@
 
 - Docker Desktop (or Docker Engine) with Compose v2
 - Node 20+ and Python 3.12+ for local editor tooling (Docker remains the runtime source of truth for apps)
+- On Debian/Ubuntu, the host `python3` used for editor setup needs the matching **`python3.X-venv`** package (e.g. `python3.12-venv` or `python3.14-venv` for whatever `python3 --version` reports). Without it, `python3 -m venv` can create `apps/backend/.venv` with no `pip`
 
 ### Editor setup (one command)
 
@@ -23,7 +24,7 @@ Run the read-only quality gate from the repo root:
 
 ```bash
 npx pnpm@9.15.0 check
-# or: make check
+# or: make check-code-quality
 ```
 
 This matches CI **codebase-quality** (format, lint, typecheck, Vitest, Next builds, Ruff). Backend pytest and admin routing smoke run in Docker via `make test` (CI **docker-tests** job) — not part of `pnpm check`.
@@ -31,7 +32,9 @@ This matches CI **codebase-quality** (format, lint, typecheck, Vitest, Next buil
 Auto-fix commands (JS/TS: Prettier formats, ESLint fixes logic/imports — `eslint-config-prettier` disables conflicting rules):
 
 ```bash
-npx pnpm@9.15.0 fix           # Prettier + ESLint (recommended before commit)
+make fix-code-quality       # Prettier write + ESLint --fix (JS/TS) + Ruff format/lint --fix (Python)
+# or:
+npx pnpm@9.15.0 fix           # Prettier + ESLint only (no Python)
 npx pnpm@9.15.0 format        # Prettier only
 npx pnpm@9.15.0 lint:fix      # Prettier, then ESLint --fix
 npx pnpm@9.15.0 python:format # Ruff format
@@ -53,7 +56,7 @@ npx pnpm@9.15.0 build
 # or: make build
 ```
 
-This builds `frontend-main` and `frontend-admin` with `NEXT_PUBLIC_API_BASE_URL` set (same as CI) and verifies each `.next/BUILD_ID` exists.
+This builds `frontend-main` and `frontend-admin` with `NEXT_PUBLIC_BACKEND_MAIN_API_URL` set (same as CI) and verifies each `.next/BUILD_ID` exists.
 
 ## Environment files
 
@@ -154,13 +157,67 @@ The shared library lives in `packages/shared` and is consumed via workspace prot
 "@starter/shared": "workspace:*"
 ```
 
-Imports use package exports:
+Next.js is configured to transpile the workspace dependency (`transpilePackages`).
+
+### Backend API client
+
+All browser-to-backend HTTP goes through `@starter/shared`. **Do not** install or import Axios in `apps/frontend-main` or `apps/frontend-admin`.
+
+**Typical usage (endpoint helper):**
 
 ```ts
 import { getHello } from '@starter/shared/api/hello';
+import { useApi } from '@starter/shared/hooks/useApi';
+
+const { state, reload } = useApi(() => getHello());
 ```
 
-Next.js is configured to transpile the workspace dependency (`transpilePackages`).
+**Direct client usage:**
+
+```ts
+import { backendMainApi, isApiError } from '@starter/shared/api';
+
+type HealthResponse = { status: string };
+
+try {
+  const health = await backendMainApi.get<HealthResponse>('/api/health/');
+} catch (error) {
+  if (isApiError(error)) {
+    // error.message is safe for UI; error.isUnauthorized for future redirect
+  }
+}
+```
+
+**Adding another backend later:**
+
+1. Add `NEXT_PUBLIC_BACKEND_SECONDARY_API_URL` to env templates and `packages/shared/src/api/core/env.ts`.
+2. Create `packages/shared/src/api/clients/backend-secondary.ts` with `createApiClient(...)`.
+3. Export from `packages/shared/src/api/index.ts`.
+4. Use `backendSecondaryApi.get(...)` in app code.
+
+**Developer rules:**
+
+- Do not duplicate API clients inside frontend apps.
+- Do not hardcode API URLs; use `NEXT_PUBLIC_BACKEND_MAIN_API_URL`.
+- Do not expose raw backend or Axios errors to users.
+- Do not log secrets, tokens, cookies, `Authorization`, CSRF headers, or sensitive request bodies.
+
+**CSRF (when cookie auth is enabled):**
+
+```ts
+createApiClient({
+  serviceName: 'backend-main',
+  baseURL: env.backendMainApiUrl,
+  withCredentials: true,
+  csrf: {
+    enabled: true,
+    cookieName: 'csrftoken',
+    headerName: 'X-CSRFToken',
+  },
+});
+```
+
+Production Django sets `CSRF_COOKIE_HTTPONLY=True`, so JavaScript cannot read `csrftoken` today; use a server/BFF route for CSRF when adding session auth.
 
 ## Common commands
 
@@ -205,9 +262,13 @@ source apps/backend/.venv/bin/activate && ruff check apps/backend
 ### Manual setup (if `make editor-happy` fails)
 
 ```bash
+# Debian/Ubuntu: X = minor version from `python3 --version` (e.g. 3.14 -> python3.14-venv)
+sudo apt install python3.X-venv
+rm -rf apps/backend/.venv   # required if a prior run left a venv without pip
+
 npx pnpm@9.15.0 install
 python3 -m venv apps/backend/.venv
-apps/backend/.venv/bin/pip install -r apps/backend/requirements-dev.txt
+apps/backend/.venv/bin/python -m pip install -r apps/backend/requirements-dev.txt
 ```
 
 Select interpreter: **Python: Select Interpreter** → `apps/backend/.venv`.
@@ -221,5 +282,6 @@ Select interpreter: **Python: Select Interpreter** → `apps/backend/.venv`.
 | Works in VS Code but not **Cursor**                                      | Cursor uses built-in **Cursor Pyright** (`cursorpyright`), not Pylance. Run `make editor-happy` (creates a root `.venv` symlink), reload window, and select `apps/backend/.venv`. Disable the **BasedPyright** extension in Cursor if installed (it conflicts). Optional: **Cursor Pyright: Restart Server** |
 | BasedPyright / Pyright `reportMissingImports`                            | Reload window. Root [`pyrightconfig.json`](../pyrightconfig.json) points at `apps/backend/.venv`                                                                                                                                                                                                             |
 | `make editor-happy` fails with pnpm `ENOENT` on `node_modules/.pnpm/...` | Corrupted install — run `rm -rf node_modules && make editor-happy` (the script retries automatically on failure)                                                                                                                                                                                             |
+| `make editor-happy`: `apps/backend/.venv/bin/pip: No such file or directory` (or script says pip is not available) | Install `python3.X-venv` for your `python3` version, `rm -rf apps/backend/.venv`, re-run `make editor-happy`. See [runbook-troubleshooting.md](runbook-troubleshooting.md#editor-setup-fails-missing-pip)                                                                                                                                                                  |
 | `.next/types` warnings                                                   | Run `pnpm dev` once in a frontend app, or ignore until first dev session                                                                                                                                                                                                                                     |
 | Wrong workspace                                                          | Close folder and re-open the **monorepo root**                                                                                                                                                                                                                                                               |

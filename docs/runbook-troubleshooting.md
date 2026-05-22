@@ -11,6 +11,23 @@ Fix:
 3. **Developer: Reload Window**
 4. See [`development.md`](development.md#fixing-editor-importpackage-errors) for interpreter, TypeScript server, and other follow-ups
 
+## Editor setup fails (missing pip)
+
+Symptoms: `make editor-happy` exits with `apps/backend/.venv/bin/pip: No such file or directory`, or the script reports that pip is not available after creating the venv.
+
+Cause: Host Python lacks `ensurepip` (common on Debian/Ubuntu when `python3.X-venv` is not installed). `python3 -m venv` may still create `apps/backend/.venv` with `bin/python` but no `pip`.
+
+Fix (from repo root):
+
+```bash
+python3 --version   # note minor version X (e.g. 3.14)
+sudo apt install python3.X-venv
+rm -rf apps/backend/.venv
+make editor-happy
+```
+
+See [`development.md`](development.md#fixing-editor-importpackage-errors) for manual setup and other editor issues.
+
 ## Port already in use
 
 Symptoms: Compose fails binding `3000`, `3001`, `8000`, `8080`, `5432`, `6379`, or `5678`.
@@ -63,8 +80,8 @@ Fix:
 
 Checklist:
 
-- `NEXT_PUBLIC_API_BASE_URL` points to a URL reachable **from the browser** (not `http://backend:8000` unless you truly intend that)
-- **Docker dev via Nginx (`http://localhost:8080`)**: set `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080` so `/api/*` is proxied by Nginx (recommended; `docker-compose.dev.yml` sets this for frontend containers)
+- `NEXT_PUBLIC_BACKEND_MAIN_API_URL` points to a URL reachable **from the browser** (not `http://backend:8000` unless you truly intend that)
+- **Docker dev via Nginx (`http://localhost:8080`)**: set `NEXT_PUBLIC_BACKEND_MAIN_API_URL=http://localhost:8080` so `/api/*` is proxied by Nginx (recommended; `docker-compose.dev.yml` sets this for frontend containers)
 - **Direct Next on `:3000` / `:3001`**: use `http://localhost:8000` or still use `http://localhost:8080` for the API
 - After changing `NEXT_PUBLIC_*`, restart frontend containers (`make dev-down && make dev-up`)
 

@@ -33,9 +33,9 @@ Values are examples. Generate strong secrets for anything security-sensitive.
 
 Nginx also applies per-IP rate limits at the edge (`infra/nginx/snippets/`). With Cloudflare in front, prod Nginx restores the client IP from `CF-Connecting-IP` before rate limiting. Health checks use a dedicated location with higher burst limits.
 
-**Next.js CSP:** `NEXT_PUBLIC_API_BASE_URL` is included in the frontend `connect-src` directive at build time (see `packages/shared/src/security/headers.mjs`).
+**Next.js CSP:** `NEXT_PUBLIC_BACKEND_MAIN_API_URL` is included in the frontend `connect-src` directive at build time (see `packages/shared/src/security/headers.mjs`).
 
-**CSRF cookie (production):** `CSRF_COOKIE_HTTPONLY=True` prevents JavaScript from reading `csrftoken`. This is fine for Django admin and today’s stateless `fetch` calls. If Next apps later use cookie/session auth, provide CSRF via a server route/BFF, or consciously set `CSRF_COOKIE_HTTPONLY=False` (weaker; requires `SameSite` + HTTPS).
+**CSRF cookie (production):** `CSRF_COOKIE_HTTPONLY=True` prevents JavaScript from reading `csrftoken`. This is fine for Django admin and today’s stateless API calls from Next. If Next apps later use cookie/session auth, enable CSRF on `backendMainApi` and provide the token via a server route/BFF, or consciously set `CSRF_COOKIE_HTTPONLY=False` (weaker; requires `SameSite` + HTTPS).
 
 ## PostgreSQL
 
@@ -58,7 +58,8 @@ Nginx also applies per-IP rate limits at the edge (`infra/nginx/snippets/`). Wit
 | Variable                   | Purpose                                                                                                                                                         |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BACKEND_URL`              | Canonical backend base URL for documentation / non-Next consumers.                                                                                              |
-| `NEXT_PUBLIC_API_BASE_URL` | Browser-accessible API base URL used by `@starter/shared` fetch helpers. **Production:** must be `https://` and your public API hostname (e.g. `https://api.starter.com`, same as `API_HOST`). Never use `http://backend:8000`, `localhost`, or dev ports — CI and Docker builds reject those. Included in frontend CSP `connect-src` at build time. |
+| `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | Browser-accessible base URL for `backendMainApi` in `@starter/shared`. **Production:** must be `https://` and your public API hostname (e.g. `https://api.starter.com`, same as `API_HOST`). Never use `http://backend:8000` or internal Docker hostnames — CI and Docker builds reject those. Included in frontend CSP `connect-src` at build time. |
+| *(future)* `NEXT_PUBLIC_BACKEND_SECONDARY_API_URL` | Reserved for an additional backend client when a second API service is added. |
 | `NEXT_PUBLIC_BASE_PATH`    | Optional Next `basePath` for the **admin** app when using path-based routing. Leave empty in default dev (`:3001/`) and production (separate hostnames). |
 
 ## Hostname documentation fields

@@ -11,7 +11,21 @@
 | Backend integration | Docker (Postgres + Redis)             | `make test` / CI **docker-tests**                  |
 | Admin root routing  | Docker (curl smoke)                   | `make test` / CI **docker-tests**                  |
 
-Frontend tests use **MSW** to mock `/api/hello/` (handlers use `*/api/hello/`).
+Frontend tests use **MSW** to mock `/api/hello/` (handlers use `*/api/hello/`). Axios uses XHR in jsdom; MSW 2.x intercepts those requests.
+
+### Shared API client unit tests
+
+`@starter/shared` API tests live under `packages/shared/src/api/core/`:
+
+- **Adapter mocks** — `createApiClient({ adapter })` with `createMockAdapter()` for deterministic unit tests (no real network).
+- **Coverage** — success/error paths, CSRF, env validation, safe logging redaction.
+- **Integration** — `hello.integration.test.ts` uses MSW against `getHello()`.
+
+Run shared tests only:
+
+```bash
+npx pnpm@9.15.0 --filter @starter/shared test
+```
 
 ## Full CI parity locally
 
@@ -56,7 +70,7 @@ Admin routing smoke uses [`docker-compose.smoke.yml`](../infra/docker/compose/do
 
 ### Deployment branches — [`.github/workflows/docker-deploy-branches.yml`](../.github/workflows/docker-deploy-branches.yml)
 
-Runs on `staging_*` / `release_*`: validate → `test-all.sh` (pytest + admin smoke) → frontend production builds (real `NEXT_PUBLIC_API_BASE_URL`) → build/push → deploy. See [runbook-docker-deploy.md](runbook-docker-deploy.md).
+Runs on `staging_*` / `release_*`: validate → `test-all.sh` (pytest + admin smoke) → frontend production builds (real `NEXT_PUBLIC_BACKEND_MAIN_API_URL`) → build/push → deploy. See [runbook-docker-deploy.md](runbook-docker-deploy.md).
 
 ## Pre-PR quick check (host only)
 

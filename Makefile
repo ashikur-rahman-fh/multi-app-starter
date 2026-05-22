@@ -1,7 +1,7 @@
 .PHONY: dev-up dev-down dev-build dev-logs dev-restart \
 	debug-up debug-down debug-build debug-logs debug-restart \
 	backend-shell backend-migrate backend-makemigrations backend-createsuperuser \
-	editor-happy build check test test-all test-smoke-admin test-backend test-frontend-main test-frontend-admin test-shared test-integration \
+	editor-happy build check-code-quality fix-code-quality test test-all test-smoke-admin test-backend test-frontend-main test-frontend-admin test-shared test-integration \
 	prod-up prod-down prod-build prod-logs prod-restart prod-migrate prod-collectstatic prod-nginx-config \
 	prod-deploy prod-rollback \
 	db-backup db-restore db-reset
@@ -55,8 +55,15 @@ editor-happy:
 build:
 	bash infra/scripts/build/build-frontends.sh
 
-check:
-	pnpm check
+# Read-only quality gate (does not modify files): Prettier check, ESLint, TypeScript,
+# Vitest, Next.js production builds (both frontends), Ruff format check + lint (backend).
+check-code-quality:
+	npx pnpm@9.15.0 check
+
+# Auto-fix formatting and lint (modifies files): Prettier write + ESLint --fix (JS/TS
+# monorepo), then Ruff format + Ruff lint --fix (apps/backend).
+fix-code-quality:
+	npx pnpm@9.15.0 fix && npx pnpm@9.15.0 python:format && npx pnpm@9.15.0 python:lint:fix
 
 test:
 	bash infra/scripts/test/test-all.sh

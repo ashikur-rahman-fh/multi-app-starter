@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./api/client": "./src/api/client.ts",
+    "./api": "./src/api/index.ts",
     "./api/errors": "./src/api/errors.ts",
     "./api/hello": "./src/api/hello.ts",
     "./hooks/useApi": "./src/hooks/useApi.ts",
@@ -20,25 +20,25 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "eslint": "^9.39.0",
-    "eslint-config-prettier": "^10.1.5",
-    "globals": "^16.4.0",
-    "typescript-eslint": "^8.46.0",
-    "eslint-plugin-jsx-a11y": "^6.10.2",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^7.0.0",
-    "eslint-plugin-unused-imports": "^4.1.4",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
+    "globals": "^16.4.0",
     "jsdom": "^25.0.1",
     "msw": "^2.6.8",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "typescript": "^5.6.3",
+    "typescript-eslint": "^8.46.0",
     "vitest": "^2.1.6"
   },
   "scripts": {
@@ -46,5 +46,8 @@
     "lint:fix": "eslint . --max-warnings 0 --fix",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.16.1"
   }
 }

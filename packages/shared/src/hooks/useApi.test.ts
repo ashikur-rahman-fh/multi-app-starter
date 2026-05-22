@@ -70,7 +70,7 @@ describe('useApi', () => {
   it('surfaces safe user-facing messages from ApiError', async () => {
     const loader = vi
       .fn()
-      .mockRejectedValue(new ApiError({ userMessage: USER_MESSAGES.notFound, status: 404 }));
+      .mockRejectedValue(new ApiError({ message: USER_MESSAGES.notFound, status: 404 }));
 
     const { result } = renderHook(() => useApi(loader));
 
