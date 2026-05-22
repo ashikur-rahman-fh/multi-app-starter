@@ -143,7 +143,10 @@ Fix:
 
 | Symptom | Likely cause | Fix |
 | ------- | ------------- | --- |
-| Invalid login (generic message) | Wrong password, inactive user, or non-superuser | `make backend-createsuperuser`; confirm `is_superuser=True` |
+| Invalid login (generic message) | Wrong password, inactive user, or non-superuser | `make backend-createsuperuser` or `make backend-sync-superusers`; confirm `is_superuser=True` |
+| Forgot admin password | Need one-time reset | `make backend-reset-user-password` (dev) or `make prod-reset-user-password` (prod); share password securely |
+| `ADMIN_SUPERUSERS` sync fails | Invalid JSON or missing password for new user | Fix JSON in env file; see [`environment-variables.md`](environment-variables.md) |
+| `make *-sync-superusers` cannot find container | Stack not running | Dev: `make dev-up`; prod: `make prod-up` |
 | Permission denied after sign-in | User is staff but not superuser | Use a superuser account |
 | CSRF / 403 on login or logout | Missing CSRF bootstrap or origin not trusted | Check `CSRF_TRUSTED_ORIGINS`; ensure `ensureAdminCsrf()` runs before POST |
 | CORS error from `:3001` | API origin not allowlisted | Add admin origin to `CORS_ALLOWED_ORIGINS`; keep `CORS_ALLOW_CREDENTIALS=true` |

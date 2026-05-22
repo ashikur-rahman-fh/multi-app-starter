@@ -23,6 +23,7 @@ export { EmptyState, type EmptyStateProps } from './components/empty-state';
 export { ErrorState, type ErrorStateProps } from './components/error-state';
 export { Badge, badgeVariants, type BadgeProps } from './components/badge';
 export { Input, type InputProps } from './components/input';
+export { PasswordInput, type PasswordInputProps } from './components/password-input/password-input';
 export {
   ThemeProvider,
   defaultThemeConfig,

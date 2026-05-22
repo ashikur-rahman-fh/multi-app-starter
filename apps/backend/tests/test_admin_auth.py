@@ -22,16 +22,6 @@ ME_URL = "/api/admin/auth/me/"
 CSRF_URL = "/api/admin/auth/csrf/"
 
 
-@pytest.fixture
-def api_client():
-    return APIClient()
-
-
-@pytest.fixture
-def csrf_client():
-    return APIClient(enforce_csrf_checks=True)
-
-
 def _create_superuser(username="admin", password="adminpass123", **kwargs):
     defaults = {
         "email": f"{username}@example.com",

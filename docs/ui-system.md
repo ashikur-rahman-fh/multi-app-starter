@@ -92,6 +92,7 @@ import '@starter/shared/ui/styles/globals.css';
 | **Card** | `rounded-lg`; white, subtle border |
 | **Navbar** | Full-width, no bar radius; links `rounded-md` |
 | **Input** | `rounded-md`; subtle focus ring |
+| **PasswordInput** | Password field with inline Eye / EyeOff toggle; `aria-label` for show/hide (no visible text on the button) |
 | **Badge** | `rounded-md` (not pill-shaped) |
 
 Pass `className` for app-level tweaks.

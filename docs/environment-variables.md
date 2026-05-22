@@ -39,6 +39,28 @@ Nginx also applies per-IP rate limits at the edge (`infra/nginx/snippets/`). Wit
 
 **CSRF cookie (production):** `CSRF_COOKIE_HTTPONLY=True` prevents JavaScript from reading `csrftoken`. The Next admin app uses `GET /api/admin/auth/csrf/` and `backendAdminApi` (`X-CSRFToken`). Ensure the admin browser origin is in `CSRF_TRUSTED_ORIGINS` and `CORS_ALLOWED_ORIGINS`. `backendMainApi` remains stateless.
 
+## Admin superuser sync (operations)
+
+| Variable | Purpose |
+| -------- | ------- |
+| `ADMIN_SUPERUSERS` | JSON **array** of superuser objects to ensure exist. Required for `make *-sync-superusers`. Each object needs `username`; new users need `password`. Optional: `email`, `first_name`, `last_name`. |
+| `ADMIN_SUPERUSER_UPDATE_PASSWORD` | When `true`, also set password from env for **existing** users (default `false`). |
+
+Example (use single quotes in `.env`):
+
+```bash
+ADMIN_SUPERUSERS='[{"username":"admin","email":"admin@example.com","password":"change-me-in-env","first_name":"Admin","last_name":"User"}]'
+ADMIN_SUPERUSER_UPDATE_PASSWORD=false
+```
+
+| Make command | Environment |
+| ------------ | ------------- |
+| `make backend-sync-superusers` | Dev |
+| `make prod-sync-superusers` | Prod |
+| `make test-sync-superusers` | Test compose DB |
+
+Never commit real passwords. Prefer env sync for bootstrap and `make *-reset-user-password` for recovery.
+
 ## PostgreSQL
 
 | Variable            | Purpose                                                                          |

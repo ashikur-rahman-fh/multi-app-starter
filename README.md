@@ -210,7 +210,8 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 | Quality    | `make fix-code-quality` (Prettier + ESLint + Ruff auto-fix), `make check-code-quality` (read-only gate, same as `pnpm check`), `make build` (Next.js prod builds) |
 | Dev        | `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-restart`, `make dev-install-js` (Linux `node_modules` for Docker on macOS) |
 | Debug      | `make debug-up`, `make debug-down`, `make debug-build`, `make debug-logs`, `make debug-restart`, `make debug-install-js`                   |
-| Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-check-migrations`, `make backend-createsuperuser`, `make backend-shell` |
+| Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-check-migrations`, `make backend-createsuperuser`, `make backend-sync-superusers`, `make backend-reset-user-password`, `make backend-shell` |
+| Admin ops  | `make prod-sync-superusers`, `make prod-reset-user-password`, `make test-sync-superusers`, `make test-reset-user-password` |
 | Tests      | `make test`, `make test-smoke-admin`, `make test-backend`, `make test-frontend-main`, `make test-frontend-admin`, `make test-shared`, `make test-integration` |
 | Prod       | `make prod-up` (local build; runs migrate + collectstatic), `make prod-deploy IMAGE_TAG=…` (registry pull; same release tasks), `make prod-rollback`, `make prod-down`, `make prod-build`, `make prod-logs`, `make prod-restart`, `make prod-migrate`, `make prod-collectstatic`, `make prod-nginx-config` |
 | DB helpers | `make db-backup`, `make db-restore`, `make db-reset` (`FORCE=1` skips reset confirmation)                                                  |

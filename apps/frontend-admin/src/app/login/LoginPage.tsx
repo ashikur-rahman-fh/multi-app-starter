@@ -10,6 +10,7 @@ import {
   CardTitle,
   Input,
   PageShell,
+  PasswordInput,
 } from '@starter/shared/ui';
 import { useRouter } from 'next/navigation';
 import { useId, useState, type FormEvent } from 'react';
@@ -26,7 +27,6 @@ export function LoginPage() {
 
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   const trimmedUsername = usernameOrEmail.trim();
   const canSubmit = trimmedUsername.length > 0 && password.length > 0 && !isLoggingIn;
@@ -84,38 +84,18 @@ export function LoginPage() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor={passwordId} className="text-sm font-medium text-foreground">
-                  {ADMIN_AUTH_COPY.passwordLabel}
-                </label>
-                <div className="relative">
-                  <Input
-                    id={passwordId}
-                    name="password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    disabled={isLoggingIn}
-                    required
-                    className="pr-24"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-1 top-1/2 -translate-y-1/2"
-                    onClick={() => setShowPassword((value) => !value)}
-                    aria-label={
-                      showPassword ? ADMIN_AUTH_COPY.hidePassword : ADMIN_AUTH_COPY.showPassword
-                    }
-                    aria-pressed={showPassword}
-                    disabled={isLoggingIn}
-                  >
-                    {showPassword ? ADMIN_AUTH_COPY.hidePassword : ADMIN_AUTH_COPY.showPassword}
-                  </Button>
-                </div>
-              </div>
+              <PasswordInput
+                id={passwordId}
+                name="password"
+                label={ADMIN_AUTH_COPY.passwordLabel}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
+                disabled={isLoggingIn}
+                required
+                showPasswordLabel={ADMIN_AUTH_COPY.showPassword}
+                hidePasswordLabel={ADMIN_AUTH_COPY.hidePassword}
+              />
 
               <Button
                 type="submit"

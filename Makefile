@@ -1,6 +1,8 @@
 .PHONY: dev-up dev-down dev-build dev-logs dev-restart dev-install-js debug-install-js \
 	debug-up debug-down debug-build debug-logs debug-restart \
 	backend-shell backend-migrate backend-makemigrations backend-check-migrations backend-createsuperuser \
+	backend-sync-superusers backend-reset-user-password prod-sync-superusers prod-reset-user-password \
+	test-sync-superusers test-reset-user-password \
 	editor-happy build check-code-quality fix-code-quality test test-all test-smoke-admin test-backend test-frontend-main test-frontend-admin test-shared test-integration \
 	prod-up prod-down prod-build prod-logs prod-restart prod-migrate prod-collectstatic prod-nginx-config \
 	prod-deploy prod-rollback \
@@ -57,6 +59,18 @@ backend-check-migrations:
 
 backend-createsuperuser:
 	bash infra/scripts/dev/createsuperuser.sh
+
+backend-sync-superusers:
+	bash infra/scripts/dev/sync-superusers.sh
+
+backend-reset-user-password:
+	bash infra/scripts/dev/reset-user-password.sh
+
+test-sync-superusers:
+	bash infra/scripts/test/sync-superusers.sh
+
+test-reset-user-password:
+	bash infra/scripts/test/reset-user-password.sh
 
 editor-happy:
 	bash infra/scripts/dev/editor-happy.sh
@@ -120,6 +134,12 @@ prod-migrate:
 
 prod-collectstatic:
 	bash infra/scripts/prod/collectstatic.sh
+
+prod-sync-superusers:
+	bash infra/scripts/prod/sync-superusers.sh
+
+prod-reset-user-password:
+	bash infra/scripts/prod/reset-user-password.sh
 
 prod-deploy:
 	@test -n "$(IMAGE_TAG)" || (echo "Usage: make prod-deploy IMAGE_TAG=staging-YYMMDD-N" >&2; exit 1)

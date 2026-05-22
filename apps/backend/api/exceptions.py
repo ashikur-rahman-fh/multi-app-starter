@@ -17,8 +17,16 @@ from api.admin.constants import (
     ADMIN_FORBIDDEN_MESSAGE,
     INVALID_CREDENTIALS_CODE,
     INVALID_CREDENTIALS_MESSAGE,
+    INVALID_CURRENT_PASSWORD_CODE,
+    INVALID_CURRENT_PASSWORD_MESSAGE,
+    WEAK_PASSWORD_CODE,
+    WEAK_PASSWORD_MESSAGE,
 )
-from api.admin.exceptions import AdminForbidden, AdminUnauthenticated, InvalidAdminCredentials
+from api.admin.exceptions import (
+    AdminForbidden,
+    AdminUnauthenticated,
+    InvalidAdminCredentials,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +39,8 @@ SAFE_MESSAGES = {
     INVALID_CREDENTIALS_CODE: INVALID_CREDENTIALS_MESSAGE,
     ADMIN_FORBIDDEN_CODE: ADMIN_FORBIDDEN_MESSAGE,
     "UNAUTHORIZED": "You need to sign in to continue.",
+    INVALID_CURRENT_PASSWORD_CODE: INVALID_CURRENT_PASSWORD_MESSAGE,
+    WEAK_PASSWORD_CODE: WEAK_PASSWORD_MESSAGE,
 }
 
 

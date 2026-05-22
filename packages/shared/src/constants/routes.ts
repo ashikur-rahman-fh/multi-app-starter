@@ -6,5 +6,6 @@ export const API_ROUTES = {
     login: '/api/admin/auth/login/',
     logout: '/api/admin/auth/logout/',
     me: '/api/admin/auth/me/',
+    changePassword: '/api/admin/auth/change-password/',
   },
 } as const;

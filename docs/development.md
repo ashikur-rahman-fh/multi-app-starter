@@ -134,9 +134,34 @@ CI runs the same checks (`manage.py check` and `makemigrations --check --dry-run
 
 ## Django admin superuser
 
+**Interactive (one-off):**
+
 ```bash
 make backend-createsuperuser
 ```
+
+**Sync from environment (idempotent, all environments):**
+
+1. Set `ADMIN_SUPERUSERS` in the environment file for that stack (see [`docs/environment-variables.md`](environment-variables.md)).
+2. Run the matching Make target:
+
+| Environment | Command |
+| ----------- | ------- |
+| Dev | `make backend-sync-superusers` |
+| Prod | `make prod-sync-superusers` |
+| Test DB | `make test-sync-superusers` |
+
+By default, existing passwords are **not** overwritten. Set `ADMIN_SUPERUSER_UPDATE_PASSWORD=true` only when you intend to push a new password from env.
+
+**Issue a temporary password (server console, existing user only):**
+
+| Environment | Command |
+| ----------- | ------- |
+| Dev | `make backend-reset-user-password` |
+| Prod | `make prod-reset-user-password` |
+| Test DB | `make test-reset-user-password` (supports `--username` for automation) |
+
+The temporary password is printed once. Instruct the user to sign in and change it from **Change password** on the profile page.
 
 Use the same credentials to sign in to the **Next admin app** at `http://localhost:3001/login` (not only Django HTML admin at `http://localhost:8080/admin/`). Only **active superusers** can access the Next admin app.
 
@@ -146,6 +171,7 @@ Use the same credentials to sign in to the **Next admin app** at `http://localho
 | ----- | ------- |
 | `/login` | Public sign-in page |
 | `/` | Protected profile (requires session) |
+| `/change-password` | Change own password (requires session) |
 
 **Local flow:**
 
@@ -163,8 +189,16 @@ import { adminAuthApi, ensureAdminCsrf } from '@starter/shared/api';
 await ensureAdminCsrf();
 await adminAuthApi.login({ usernameOrEmail: 'admin', password: '…' });
 const user = await adminAuthApi.getCurrentUser();
+await adminAuthApi.updateProfile({ firstName: 'Ada', lastName: 'Admin', email: 'ada@example.com' });
+await adminAuthApi.changePassword({
+  currentPassword: '…',
+  newPassword: '…',
+  confirmPassword: '…',
+});
 await adminAuthApi.logout();
 ```
+
+**Profile API:** `GET` / `PATCH` `/api/admin/auth/me/` — safe fields only (`firstName`, `lastName`, `email`). **Password:** `POST` `/api/admin/auth/change-password/` — requires current password; session stays valid after change.
 
 `frontend-admin` wraps the app in `AdminAuthProvider` and uses `RequireAdminAuth` / `RedirectIfAuthenticated` guards. On refresh, the provider calls `ensureAdminCsrf()` then `getCurrentUser()` to restore the session.
 

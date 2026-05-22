@@ -28,7 +28,7 @@ make dev-up
 
 ## Admin app sign-in (quick check)
 
-1. `make backend-createsuperuser`
+1. `make backend-createsuperuser` **or** set `ADMIN_SUPERUSERS` in `infra/env/dev/.env` and run `make backend-sync-superusers`
 2. Open http://localhost:3001/login and sign in (superuser only)
 3. Profile page at http://localhost:3001/
 

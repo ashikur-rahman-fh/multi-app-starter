@@ -84,9 +84,16 @@ sequenceDiagram
   API-->>AdminUI: sessionid cookie + safe user JSON
   AdminUI->>API: GET /api/admin/auth/me/
   API-->>AdminUI: user JSON or 401/403
+  AdminUI->>API: PATCH /api/admin/auth/me/ (safe profile fields)
+  AdminUI->>API: POST /api/admin/auth/change-password/
 ```
 
 **Authorization policy:** authenticated, `is_active=True`, `is_superuser=True`. Staff-only users are rejected. Backend enforces this on login and `me`; the Next app adds route guards (`RequireAdminAuth`, `RedirectIfAuthenticated`) for UX only.
+
+**Operational account management (server-only, not exposed via public API):**
+
+- `sync_superusers_from_env` — idempotent superuser bootstrap from `ADMIN_SUPERUSERS` (`make backend-sync-superusers`, `make prod-sync-superusers`, `make test-sync-superusers`).
+- `issue_temporary_password` — interactive one-time password for an existing user (`make backend-reset-user-password`, `make prod-reset-user-password`).
 
 ### PostgreSQL
 

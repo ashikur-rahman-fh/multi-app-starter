@@ -356,6 +356,8 @@ Migrations are **not** run from Gunicorn workers. Production does **not** run `m
 
 If release tasks fail, deploy stops and `.current_deployment` is not updated.
 
+**Admin superusers after deploy:** set `ADMIN_SUPERUSERS` in the VM `infra/env/prod/.env`, then run `make prod-sync-superusers` (idempotent). For password recovery on an existing account, use `make prod-reset-user-password` on the VM (interactive; password shown once).
+
 **Rollback note:** `make prod-rollback` redeploys a previous image tag through the same script. If the database was migrated forward by a failed or partial deploy, rolling back code without reversing migrations can break the old version — treat schema changes as forward-only unless you plan downgrade migrations.
 
 ---

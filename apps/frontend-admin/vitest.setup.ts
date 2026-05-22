@@ -6,6 +6,8 @@ import { setupServer } from 'msw/node';
 export const adminUser = {
   id: 1,
   name: 'Admin User',
+  firstName: 'Admin',
+  lastName: 'User',
   username: 'admin',
   email: 'admin@example.com',
   isStaff: true,

@@ -1,4 +1,10 @@
-from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth import (
+    authenticate,
+    get_user_model,
+    login,
+    logout,
+    update_session_auth_hash,
+)
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework.decorators import (
@@ -13,13 +19,25 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from .authentication import AdminSessionAuthentication
 from .exceptions import AdminForbidden, AdminUnauthenticated, InvalidAdminCredentials
-from .permissions import IsActiveSuperuser, is_authorized_admin_user
-from .serializers import AdminLoginSerializer, resolve_username, serialize_admin_user
+from .permissions import is_authorized_admin_user
+from .serializers import (
+    AdminChangePasswordSerializer,
+    AdminLoginSerializer,
+    AdminProfileUpdateSerializer,
+    resolve_username,
+    serialize_admin_user,
+)
 
 User = get_user_model()
 
 SESSION_AUTH = [AdminSessionAuthentication]
-ADMIN_PERMISSION = [IsActiveSuperuser]
+
+
+def _require_authorized_admin(request):
+    if not request.user.is_authenticated:
+        raise AdminUnauthenticated()
+    if not is_authorized_admin_user(request.user):
+        raise AdminForbidden()
 
 
 def _authenticate_admin_credentials(request, username_or_email: str, password: str):
@@ -68,13 +86,32 @@ def admin_logout(request):
     return Response({"success": True})
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 @authentication_classes(SESSION_AUTH)
 @permission_classes([AllowAny])
 def admin_me(request):
+    _require_authorized_admin(request)
     user = request.user
-    if not user.is_authenticated:
-        raise AdminUnauthenticated()
-    if not is_authorized_admin_user(user):
-        raise AdminForbidden()
+    if request.method == "GET":
+        return Response(serialize_admin_user(user))
+
+    serializer = AdminProfileUpdateSerializer(data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    serializer.update(user, serializer.validated_data)
+    user.refresh_from_db()
     return Response(serialize_admin_user(user))
+
+
+@api_view(["POST"])
+@authentication_classes(SESSION_AUTH)
+@permission_classes([AllowAny])
+def admin_change_password(request):
+    _require_authorized_admin(request)
+    serializer = AdminChangePasswordSerializer(
+        data=request.data,
+        context={"user": request.user},
+    )
+    serializer.is_valid(raise_exception=True)
+    user = serializer.save()
+    update_session_auth_hash(request, user)
+    return Response({"success": True})

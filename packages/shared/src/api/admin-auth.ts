@@ -1,8 +1,11 @@
 import { API_ROUTES } from '../constants/routes';
 import type {
+  AdminChangePasswordRequest,
+  AdminChangePasswordResponse,
   AdminCsrfResponse,
   AdminLoginRequest,
   AdminLogoutResponse,
+  AdminProfileUpdateRequest,
   AdminUser,
 } from '../types/admin-auth';
 import { backendAdminApi, getAdminCsrfToken, setAdminCsrfToken } from './clients/backend-admin';
@@ -33,5 +36,25 @@ export const adminAuthApi = {
       await ensureAdminCsrf();
     }
     return backendAdminApi.post<AdminLogoutResponse>(API_ROUTES.adminAuth.logout);
+  },
+
+  async updateProfile(data: AdminProfileUpdateRequest): Promise<AdminUser> {
+    if (!getAdminCsrfToken()) {
+      await ensureAdminCsrf();
+    }
+    return backendAdminApi.patch<AdminUser, AdminProfileUpdateRequest>(
+      API_ROUTES.adminAuth.me,
+      data,
+    );
+  },
+
+  async changePassword(data: AdminChangePasswordRequest): Promise<AdminChangePasswordResponse> {
+    if (!getAdminCsrfToken()) {
+      await ensureAdminCsrf();
+    }
+    return backendAdminApi.post<AdminChangePasswordResponse, AdminChangePasswordRequest>(
+      API_ROUTES.adminAuth.changePassword,
+      data,
+    );
   },
 };

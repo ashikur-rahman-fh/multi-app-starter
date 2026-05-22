@@ -14,6 +14,8 @@ const BASE = 'https://api.example.test';
 const sampleUser = {
   id: 1,
   name: 'Admin User',
+  firstName: 'Admin',
+  lastName: 'User',
   username: 'admin',
   email: 'admin@example.com',
   isStaff: true,
@@ -160,6 +162,61 @@ describe('adminAuthApi', () => {
         expect(error.message).not.toContain('Axios');
       }
     }
+  });
+
+  it('updateProfile sends PATCH to me endpoint', async () => {
+    setAdminCsrfToken('token');
+    const adapter = createMockAdapter((config) => {
+      if (config.method?.toLowerCase() === 'patch' && config.url?.includes('/me/')) {
+        return mockJsonResponse(config, {
+          data: { ...sampleUser, firstName: 'Updated', email: 'new@example.com' },
+        });
+      }
+      return mockJsonResponse(config, { data: sampleUser });
+    });
+
+    const client = createApiClient({
+      serviceName: 'backend-admin',
+      baseURL: BASE,
+      withCredentials: true,
+      csrf: { enabled: true, tokenProvider: () => 'token' },
+      adapter,
+    });
+
+    const result = await client.patch<typeof sampleUser, { firstName: string; email: string }>(
+      '/api/admin/auth/me/',
+      { firstName: 'Updated', email: 'new@example.com' },
+    );
+    expect(result.firstName).toBe('Updated');
+    expect(result.email).toBe('new@example.com');
+  });
+
+  it('changePassword posts typed body', async () => {
+    setAdminCsrfToken('token');
+    const adapter = createMockAdapter((config) => {
+      if (config.url?.includes('/change-password/')) {
+        return mockJsonResponse(config, { data: { success: true } });
+      }
+      return mockJsonResponse(config, { data: { csrfToken: 'token' } });
+    });
+
+    const client = createApiClient({
+      serviceName: 'backend-admin',
+      baseURL: BASE,
+      withCredentials: true,
+      csrf: { enabled: true, tokenProvider: () => 'token' },
+      adapter,
+    });
+
+    const result = await client.post<
+      { success: boolean },
+      { currentPassword: string; newPassword: string; confirmPassword: string }
+    >('/api/admin/auth/change-password/', {
+      currentPassword: 'old',
+      newPassword: 'NewPass123!',
+      confirmPassword: 'NewPass123!',
+    });
+    expect(result).toEqual({ success: true });
   });
 
   it('backendAdminApi uses withCredentials', () => {
