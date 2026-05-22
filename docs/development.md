@@ -83,7 +83,7 @@ docker compose --project-directory "$(pwd)" -f infra/docker/compose/docker-compo
 
 ## Start services
 
-`make dev-up` and `make debug-up` start Compose **detached** (containers run in the background; that shell does not stream logs). Use **`make dev-logs`** / **`make debug-logs`** to follow backend logs, or run `docker compose ... logs -f` for other services.
+`make dev-up` and `make debug-up` start Compose **detached** (containers run in the background; that shell does not stream logs). Use **`make dev-logs`** / **`make debug-logs`** to follow all service logs, or run `docker compose ... logs -f <service>` for a single service.
 
 Regular development:
 

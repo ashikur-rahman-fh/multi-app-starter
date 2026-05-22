@@ -68,7 +68,7 @@ Symptoms: browser or `curl http://localhost:8080/api/hello/` returns **502**; fr
 
 Fix:
 
-1. Check backend logs: `bash infra/scripts/dev/logs.sh` or `make dev-logs`
+1. Check logs: `bash infra/scripts/dev/logs.sh` or `make dev-logs` (all services)
 2. **ImportError on startup** (e.g. `cannot import name 'throttle_scope'`): fix the Python error in `apps/backend` — Django never listens on `:8000`, so Nginx has no upstream
 3. **Database / axes errors** (`relation "axes_accessattempt" does not exist`): run `make backend-migrate`
 4. After dependency or Dockerfile changes: `make dev-down && make dev-up` (rebuild)

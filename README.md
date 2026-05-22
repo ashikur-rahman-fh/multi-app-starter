@@ -119,7 +119,7 @@ See [`docs/environment-variables.md`](docs/environment-variables.md) for what ea
 
 ## Regular development (hot reload)
 
-`make dev-up` starts the stack **in the background** (no log stream in that terminal). Use **`make dev-logs`** when you want to follow backend logs (or run `docker compose ... logs -f` for other services).
+`make dev-up` starts the stack **in the background** (no log stream in that terminal). Use **`make dev-logs`** when you want to follow all service logs (or run `docker compose ... logs -f <service>` for one service).
 
 ```bash
 make dev-up
@@ -148,7 +148,7 @@ make backend-createsuperuser
 
 ## Debug development (Django + debugpy)
 
-Use this stack when you want VS Code (or another DAP client) to attach to Django. **`make debug-up`** also runs **detached**; use **`make debug-logs`** for backend logs.
+Use this stack when you want VS Code (or another DAP client) to attach to Django. **`make debug-up`** also runs **detached**; use **`make debug-logs`** for all service logs.
 
 ```bash
 make debug-up
