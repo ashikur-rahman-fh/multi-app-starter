@@ -1,6 +1,6 @@
 .PHONY: dev-up dev-down dev-build dev-logs dev-restart \
 	debug-up debug-down debug-build debug-logs debug-restart \
-	backend-shell backend-migrate backend-makemigrations backend-createsuperuser \
+	backend-shell backend-migrate backend-makemigrations backend-check-migrations backend-createsuperuser \
 	editor-happy build check-code-quality fix-code-quality test test-all test-smoke-admin test-backend test-frontend-main test-frontend-admin test-shared test-integration \
 	prod-up prod-down prod-build prod-logs prod-restart prod-migrate prod-collectstatic prod-nginx-config \
 	prod-deploy prod-rollback \
@@ -45,6 +45,9 @@ backend-migrate:
 
 backend-makemigrations:
 	bash infra/scripts/dev/makemigrations.sh
+
+backend-check-migrations:
+	bash infra/scripts/dev/check-migrations.sh
 
 backend-createsuperuser:
 	bash infra/scripts/dev/createsuperuser.sh

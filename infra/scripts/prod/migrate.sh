@@ -7,15 +7,27 @@ cd "$ROOT"
 source "${ROOT}/infra/scripts/lib/preflight.sh"
 
 COMPOSE_FILE="infra/docker/compose/docker-compose.prod.yml"
+ENV_FILE="infra/env/prod/.env"
 
 require_docker
-require_env_file "infra/env/prod/.env" "copy infra/env/prod/.env.example first."
-require_compose_service "$COMPOSE_FILE" backend prod-up infra/env/prod/.env
+require_env_file "$ENV_FILE" "copy infra/env/prod/.env.example first."
+require_compose_service "$COMPOSE_FILE" backend prod-up "$ENV_FILE"
+
+compose() {
+  docker compose \
+    --project-directory "$ROOT" \
+    --env-file "$ENV_FILE" \
+    -f "$COMPOSE_FILE" \
+    "$@"
+}
+
+# shellcheck source=infra/scripts/lib/backend-django-prod.sh
+source "${ROOT}/infra/scripts/lib/backend-django-prod.sh"
+
+backend_compose_run() {
+  compose exec -T backend "$@"
+}
 
 log_info "Running production database migrations..."
-docker compose \
-  --project-directory "$ROOT" \
-  --env-file infra/env/prod/.env \
-  -f "$COMPOSE_FILE" \
-  exec backend python manage.py migrate
+backend_release_migrate
 log_success "Production database migrations completed."

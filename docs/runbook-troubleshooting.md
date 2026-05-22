@@ -52,7 +52,7 @@ Checklist:
 
 - Postgres is healthy: `docker compose ... ps`
 - `POSTGRES_*` variables match between Django and Postgres service
-- You ran migrations: `make backend-migrate`
+- Backend container started successfully (migrations run on startup), or you ran `make backend-migrate`
 - You are not accidentally pointing Django at the wrong compose stack
 
 ## Redis connection fails
@@ -141,10 +141,33 @@ Fix:
 
 Symptoms: `django.db.migrations.exceptions...` or “relation does not exist”.
 
+**Development:**
+
+- Backend startup runs `wait_for_db` then `migrate --noinput`. If the container exits immediately, check logs: `make dev-logs`
+- Message about missing migration files → `make backend-makemigrations`, then restart
+- `make backend-migrate` for a manual apply
+- `make backend-check-migrations` before pushing (same as CI)
+
+**Production deploy failed during release tasks:**
+
+- Deploy stops before updating `.current_deployment`. Read the SSH / Actions log for `backend-release-tasks` or `migrate` / `collectstatic` errors
+- Fix migration files in git, redeploy, or run `make prod-migrate` on the VM only if you understand the schema state
+- Production never auto-generates migrations
+
+**Database not ready:**
+
+- Symptoms: `[backend] Database not ready after …` or `wait_for_db` timeout
+- Ensure `postgres` is healthy: `docker compose … ps postgres`
+- Check `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB` in the env file match the running stack
+
+## Static files (production admin CSS missing)
+
+Symptoms: Django admin loads without styles in production.
+
 Fix:
 
-- `make backend-migrate`
-- If you changed models: `make backend-makemigrations` then migrate again
+- Deploy runs `collectstatic` automatically. If you skipped deploy, run `make prod-collectstatic`
+- Static files live in the `backend_staticfiles` volume; a new volume on first deploy after this change is populated on the next successful release tasks run
 
 ## Missing env file
 

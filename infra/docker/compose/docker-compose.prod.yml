@@ -32,6 +32,8 @@ services:
       dockerfile: infra/docker/backend/Dockerfile.prod
     env_file:
       - ./infra/env/prod/.env
+    volumes:
+      - backend_staticfiles:/app/staticfiles
     expose:
       - '8000'
     depends_on:
@@ -91,3 +93,4 @@ services:
 
 volumes:
   postgres_prod_data:
+  backend_staticfiles:

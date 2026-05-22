@@ -125,11 +125,7 @@ See [`docs/environment-variables.md`](docs/environment-variables.md) for what ea
 make dev-up
 ```
 
-Then run migrations once (and after model changes):
-
-```bash
-make backend-migrate
-```
+Migrations apply automatically when the backend container starts. After model changes, create migration files with `make backend-makemigrations`, then restart the backend (`make dev-restart`). Use `make backend-migrate` only for manual troubleshooting.
 
 Create an admin user for Django admin:
 
@@ -205,9 +201,9 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 | Quality    | `make fix-code-quality` (Prettier + ESLint + Ruff auto-fix), `make check-code-quality` (read-only gate, same as `pnpm check`), `make build` (Next.js prod builds) |
 | Dev        | `make dev-up`, `make dev-down`, `make dev-build`, `make dev-logs`, `make dev-restart`                                                      |
 | Debug      | `make debug-up`, `make debug-down`, `make debug-build`, `make debug-logs`, `make debug-restart`                                            |
-| Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-createsuperuser`, `make backend-shell`                                |
+| Backend    | `make backend-migrate`, `make backend-makemigrations`, `make backend-check-migrations`, `make backend-createsuperuser`, `make backend-shell` |
 | Tests      | `make test`, `make test-smoke-admin`, `make test-backend`, `make test-frontend-main`, `make test-frontend-admin`, `make test-shared`, `make test-integration` |
-| Prod       | `make prod-up` (local build), `make prod-deploy IMAGE_TAG=…` (registry pull), `make prod-rollback`, `make prod-down`, `make prod-build`, `make prod-logs`, `make prod-restart`, `make prod-migrate`, `make prod-collectstatic`, `make prod-nginx-config` |
+| Prod       | `make prod-up` (local build; runs migrate + collectstatic), `make prod-deploy IMAGE_TAG=…` (registry pull; same release tasks), `make prod-rollback`, `make prod-down`, `make prod-build`, `make prod-logs`, `make prod-restart`, `make prod-migrate`, `make prod-collectstatic`, `make prod-nginx-config` |
 | DB helpers | `make db-backup`, `make db-restore`, `make db-reset` (`FORCE=1` skips reset confirmation)                                                  |
 
 ## Documentation

@@ -75,18 +75,21 @@ echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 echo "==> Pulling images for tag ${IMAGE_TAG}"
 compose pull backend frontend-main frontend-admin nginx
 
-# 7. Restart without building
+# 7. Migrations and collectstatic (one-off jobs before serving traffic)
+bash infra/scripts/deploy/backend-release-tasks.sh
+
+# 8. Restart without building
 echo "==> Starting containers (no local build)"
 compose up -d --no-build --remove-orphans
 
-# 8. Prune unused images
+# 9. Prune unused images
 docker image prune -f
 
 compose ps
 
-# 9. Health checks
+# 10. Health checks
 bash infra/scripts/deploy/health-check.sh
 
-# 10. Record successful deployment
+# 11. Record successful deployment
 echo "$IMAGE_TAG" > .current_deployment
 echo "==> Deployment complete: ${IMAGE_TAG}"

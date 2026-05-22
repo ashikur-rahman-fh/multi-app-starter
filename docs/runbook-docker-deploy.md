@@ -89,7 +89,7 @@ Push branch → Validate → Tests → Frontend builds → Build/push images →
 | **Test** | Runs the same full test suite as `make test` (backend, frontends, quality checks). |
 | **Verify frontend production builds** | Builds **frontend-main** and **frontend-admin** for production, using `NEXT_PUBLIC_BACKEND_MAIN_API_URL` from the GitHub Environment. |
 | **Build and push** | Builds and uploads four images with an **immutable tag** (e.g. `staging-260515-1`). Also pushes `-latest`, but deploy uses the immutable tag only. |
-| **Deploy to VM** | SSH to the environment’s VM, **backup database first**, pull images, `docker compose up -d --no-build`, health checks, update `.current_deployment`. |
+| **Deploy to VM** | SSH to the environment’s VM, **backup database first**, pull images, **backend release tasks** (migrate + collectstatic via one-off `compose run`), `docker compose up -d --no-build`, health checks, update `.current_deployment`. |
 
 **Important:** If tests, builds, push, or health checks fail, the workflow stops. If the default database backup **runs** and fails (e.g. empty dump), deploy stops. If Postgres is **not** running, backup is **skipped** and deploy continues.
 
@@ -343,13 +343,30 @@ If a **default** `pg_dump` backup runs and fails (empty file, exec error) → de
 
 ---
 
+## Backend release tasks (migrate + collectstatic)
+
+After images are pulled and **before** `docker compose up` restarts app containers, [`backend-release-tasks.sh`](../infra/scripts/deploy/backend-release-tasks.sh) runs one-off jobs with the **new** backend image:
+
+1. Start `postgres` and `redis` if needed
+2. `python manage.py wait_for_db`
+3. `showmigrations --plan`, `migrate --check` (informational), `migrate --noinput`
+4. `collectstatic --noinput` into the `backend_staticfiles` volume
+
+Migrations are **not** run from Gunicorn workers. Production does **not** run `makemigrations`. Missing migration files should be caught in CI (`makemigrations --check --dry-run`).
+
+If release tasks fail, deploy stops and `.current_deployment` is not updated.
+
+**Rollback note:** `make prod-rollback` redeploys a previous image tag through the same script. If the database was migrated forward by a failed or partial deploy, rolling back code without reversing migrations can break the old version — treat schema changes as forward-only unless you plan downgrade migrations.
+
+---
+
 ## Manual deploy and rollback (registry images on the VM)
 
 One-time: add registry deploy settings to **`infra/env/prod/.env` on the VM** (same names as GitHub `staging_env` / `release_env`): `DOCKER_REPO`, `BRANCH_SLUG`, `DOCKER_USERNAME`, `DOCKER_TOKEN`, `BACKUP_DIR`, `APP_DOMAIN`. See [`infra/env/prod/.env.example`](../infra/env/prod/.env.example).
 
 | Command | Purpose |
 | ------- | ------- |
-| `make prod-deploy IMAGE_TAG=staging-260516-1` | Pull that tag, backup DB, render nginx, restart, health check |
+| `make prod-deploy IMAGE_TAG=staging-260516-1` | Pull that tag, backup DB, render nginx, migrate + collectstatic, restart, health check |
 | `make prod-rollback` | Deploy the tag in `.previous_deployment` |
 | `make prod-up` | **Local build** from source (not registry rollback) |
 

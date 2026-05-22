@@ -5,7 +5,8 @@ Used by GitHub Actions **Deploy to VM** via SSH and by **`make prod-deploy`** on
 | Script | Purpose |
 | ------ | ------- |
 | [`load-deploy-env.sh`](load-deploy-env.sh) | Load deploy settings from `infra/env/prod/.env` (sourced by `vm-deploy.sh`; CI env vars take precedence) |
-| [`vm-deploy.sh`](vm-deploy.sh) | Backup → git sync → **render Nginx from `.env`** → registry login → pull → `up -d --no-build` → health checks |
+| [`backend-release-tasks.sh`](backend-release-tasks.sh) | One-off `compose run` jobs: `wait_for_db`, migration plan/check/apply, `collectstatic` (before app restart) |
+| [`vm-deploy.sh`](vm-deploy.sh) | Backup → git sync → **render Nginx from `.env`** → registry login → pull → **backend release tasks** → `up -d --no-build` → health checks |
 | [`backup-database.sh`](backup-database.sh) | Timestamped PostgreSQL backup before container changes (skipped if `postgres` is not running, unless `DB_BACKUP_COMMAND` is set) |
 | [`health-check.sh`](health-check.sh) | Post-deploy container and `/api/health/` checks |
 

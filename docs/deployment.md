@@ -12,7 +12,7 @@ That runbook covers branch naming, GitHub Environment setup (`staging_env` / `re
 
 Workflow file: [`.github/workflows/docker-deploy-branches.yml`](../.github/workflows/docker-deploy-branches.yml)
 
-After images are pushed, the workflow **SSHs to the VM**, backs up PostgreSQL, pulls the immutable image tag (e.g. `staging-260515-1`), and runs `docker compose up -d --no-build`. See the runbook for VM bootstrap, secrets, backup location, and rollback.
+After images are pushed, the workflow **SSHs to the VM**, backs up PostgreSQL, pulls the immutable image tag (e.g. `staging-260515-1`), runs **one-off backend release tasks** (pending migration check, `migrate --noinput`, `collectstatic --noinput`), then `docker compose up -d --no-build`. See the runbook for VM bootstrap, secrets, backup location, and rollback.
 
 Registry deploy uses [`infra/docker/compose/docker-compose.deploy.yml`](../infra/docker/compose/docker-compose.deploy.yml) merged with prod compose on the server.
 
@@ -71,11 +71,28 @@ Next.js bakes `NEXT_PUBLIC_*` variables at build time. [`infra/docker/compose/do
 
 ## Backend process model
 
-Production backend runs **Gunicorn** (`infra/docker/backend/Dockerfile.prod`).
+Production backend runs **Gunicorn** (`infra/docker/backend/Dockerfile.prod`). Migrations and static collection are **not** run from Gunicorn workers.
 
-Static files:
+### Migrations and static files (automated on deploy)
 
-- Run `make prod-collectstatic` after deploy/version changes that affect static assets.
+[`infra/scripts/deploy/backend-release-tasks.sh`](../infra/scripts/deploy/backend-release-tasks.sh) runs before the app stack restarts:
+
+1. Ensure `postgres` and `redis` are up
+2. `wait_for_db` → `showmigrations --plan` → `migrate --check` (log only) → `migrate --noinput`
+3. `collectstatic --noinput` into the `backend_staticfiles` Docker volume
+
+This is invoked from [`vm-deploy.sh`](../infra/scripts/deploy/vm-deploy.sh) and [`make prod-up`](../Makefile) (local prod build). Production **never** runs `makemigrations`; CI catches missing migration files.
+
+If deploy fails during release tasks, the script exits non-zero and `.current_deployment` is not updated.
+
+Manual overrides (stack already running):
+
+```bash
+make prod-migrate
+make prod-collectstatic
+```
+
+Static files are served by **WhiteNoise** from `/app/staticfiles` (named volume in prod compose). Nginx proxies API traffic to Django; no separate nginx static root for Django admin assets.
 
 ## Basic startup command
 

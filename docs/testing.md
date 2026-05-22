@@ -76,7 +76,7 @@ Admin routing smoke uses [`docker-compose.smoke.yml`](../infra/docker/compose/do
 
 | Job                  | What it runs                                                                                                                                                          |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **codebase-quality** | Prettier, Ruff, ESLint, typecheck, Vitest, Next production builds, dependency audit                                                                                   |
+| **codebase-quality** | Prettier, Ruff, Django `manage.py check`, `makemigrations --check --dry-run`, ESLint, typecheck, Vitest, Next production builds, dependency audit                       |
 | **docker-tests**     | After quality passes: `test-all.sh` — backend pytest + admin root routing smoke                                                                                       |
 
 ### Deployment branches — [`.github/workflows/docker-deploy-branches.yml`](../.github/workflows/docker-deploy-branches.yml)

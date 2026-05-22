@@ -22,11 +22,7 @@ npx pnpm@9.15.0 install
 make dev-up
 ```
 
-5. Migrate database:
-
-```bash
-make backend-migrate
-```
+5. The backend container applies migrations on startup. If you change models later, run `make backend-makemigrations` and restart (`make dev-restart`).
 
 ## Daily workflow
 

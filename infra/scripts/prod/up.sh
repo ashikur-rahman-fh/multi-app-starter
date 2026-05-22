@@ -10,6 +10,9 @@ fi
 
 bash infra/scripts/nginx/render-prod-config.sh
 
+echo "==> Backend release tasks (migrate, collectstatic) before starting app services"
+bash infra/scripts/deploy/backend-release-tasks.sh
+
 docker compose \
   --project-directory "$ROOT" \
   --env-file infra/env/prod/.env \

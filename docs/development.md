@@ -99,17 +99,29 @@ make debug-up
 
 ## Database migrations
 
-After the first boot (and whenever you change models):
+The **development backend container** applies committed migrations automatically on startup (`wait_for_db` → migration file check → `migrate --noinput`). You do not need to run `make backend-migrate` after every normal schema change once migration files exist.
+
+After you change Django models, create migration files (not auto-generated at startup):
+
+```bash
+make backend-makemigrations
+```
+
+Restart the backend container (or `make dev-restart`) so the new migrations are applied.
+
+Manual migrate (troubleshooting or one-off):
 
 ```bash
 make backend-migrate
 ```
 
-Create new migrations from model changes:
+Verify migration files are committed before opening a PR:
 
 ```bash
-make backend-makemigrations
+make backend-check-migrations
 ```
+
+CI runs the same checks (`manage.py check` and `makemigrations --check --dry-run`).
 
 ## Django admin superuser
 
