@@ -3,14 +3,22 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
+  "imports": {
+    "#ui/*": "./src/ui/*",
+    "#components/*": "./src/ui/components/*",
+    "#hooks/*": "./src/hooks/*.ts"
+  },
   "exports": {
     "./api": "./src/api/index.ts",
     "./api/errors": "./src/api/errors.ts",
     "./api/hello": "./src/api/hello.ts",
     "./hooks/useApi": "./src/hooks/useApi.ts",
-    "./components/Button": "./src/components/Button.tsx",
-    "./components/LoadingState": "./src/components/LoadingState.tsx",
-    "./components/ErrorState": "./src/components/ErrorState.tsx",
+    "./ui": "./src/ui/index.ts",
+    "./ui/theme": "./src/ui/theme/index.ts",
+    "./ui/styles/globals.css": "./src/ui/styles/globals.css",
+    "./components/Button": "./src/ui/components/button/index.ts",
+    "./components/LoadingState": "./src/ui/components/loading-state/index.ts",
+    "./components/ErrorState": "./src/ui/components/error-state/index.ts",
     "./types/api": "./src/types/api.ts",
     "./constants/routes": "./src/constants/routes.ts",
     "./security/headers": "./src/security/headers.mjs"
@@ -23,6 +31,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^22.9.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.4",
@@ -48,6 +57,19 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "axios": "^1.16.1"
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@tailwindcss/postcss": "^4.3.0",
+    "axios": "^1.16.1",
+    "basecoat-css": "^0.3.11",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.16.0",
+    "next-themes": "^0.4.6",
+    "postcss": "^8.5.15",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.0",
+    "tailwindcss-animate": "^1.0.7"
   }
 }

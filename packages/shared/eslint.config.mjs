@@ -43,6 +43,7 @@ export default [
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.configs.recommended.rules,
       'react/react-in-jsx-scope': 'off',
+      'react/prop-types': 'off',
       // React 19 hooks plugin flags common async-fetch patterns; keep starter hook idiomatic.
       'react-hooks/refs': 'off',
       'react-hooks/set-state-in-effect': 'off',

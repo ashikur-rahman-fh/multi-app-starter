@@ -9,7 +9,7 @@ import { server } from './vitest.setup';
 describe('HomePage', () => {
   it('renders title', () => {
     render(<HomePage />);
-    expect(screen.getByRole('heading', { name: /main app hello world/i })).toBeInTheDocument();
+    expect(screen.getByText('Backend connection')).toBeInTheDocument();
   });
 
   it('shows backend hello response', async () => {
@@ -58,7 +58,7 @@ describe('HomePage', () => {
 
     render(<HomePage />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(USER_MESSAGES.serverError);
+    expect(await screen.findByText(USER_MESSAGES.serverError)).toBeInTheDocument();
   });
 
   it('disables reload while loading', async () => {

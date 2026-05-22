@@ -15,8 +15,8 @@ This repository intentionally avoids authentication, authorization, payments, an
 | API            | Django + DRF (`apps/backend`)                            |
 | DB             | PostgreSQL                                               |
 | Cache          | Redis (`django-redis`)                                   |
-| Web (public)   | Next.js 14 (`apps/frontend-main`, `apps/frontend-admin`) |
-| Shared UI/API  | pnpm workspace package `@starter/shared` (Axios API client, UI, hooks) |
+| Web (public)   | Next.js 16 (`apps/frontend-main`, `apps/frontend-admin`) |
+| Shared UI/API  | pnpm workspace package `@starter/shared` (API client, design system, hooks) |
 | Reverse proxy  | Nginx (`infra/nginx`)                                    |
 | JS tooling     | pnpm workspaces, ESLint, Prettier, TypeScript            |
 | Python tooling | Ruff (lint + format)                                     |
@@ -213,6 +213,7 @@ Push a deployment branch (`staging_YYMMDD_N` or `release_YYMMDD_N`) to build and
 ## Documentation
 
 - [`docs/architecture.md`](docs/architecture.md)
+- [`docs/ui-system.md`](docs/ui-system.md)
 - [`docs/development.md`](docs/development.md) — includes [release metadata](docs/development.md#release-metadata) (`GET /api/public/meta/`)
 - [`docs/testing.md`](docs/testing.md)
 - [`docs/deployment.md`](docs/deployment.md)
@@ -227,7 +228,7 @@ Both Next apps import shared code like:
 
 ```ts
 import { getHello } from '@starter/shared/api/hello';
-import { Button } from '@starter/shared/components/Button';
+import { Button } from '@starter/shared/ui';
 ```
 
 This is powered by `package.json` `exports` in `packages/shared` and `transpilePackages` in each Next config.

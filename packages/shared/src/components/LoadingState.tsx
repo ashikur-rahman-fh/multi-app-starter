@@ -1,3 +1,1 @@
-export function LoadingState({ label = 'Loading…' }: { label?: string }) {
-  return <p role="status">{label}</p>;
-}
+export { LoadingState, type LoadingStateProps } from '../ui/components/loading-state';

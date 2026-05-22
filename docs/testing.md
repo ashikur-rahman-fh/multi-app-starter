@@ -27,6 +27,17 @@ Run shared tests only:
 npx pnpm@9.15.0 --filter @starter/shared test
 ```
 
+### Shared UI component tests
+
+Vitest + Testing Library tests for the design system live under `packages/shared/src/ui/`:
+
+- `components/button/button.test.tsx`
+- `components/alert/alert.test.tsx`
+- `components/navbar/navbar.test.tsx`
+- `theme/theme-provider.test.tsx`
+
+Frontend home page tests assert integration with `@starter/shared/ui` imports. See [`ui-system.md`](ui-system.md).
+
 ## Full CI parity locally
 
 ```bash
@@ -41,7 +52,7 @@ make test           # backend pytest + admin root smoke in Docker
 
 1. Starts **postgres-test** and **redis-test**, waits for readiness
 2. Runs **`test-runner`** (pytest unit + integration)
-3. Runs **admin root routing smoke** ([`test-smoke-admin.sh`](../infra/scripts/test/test-smoke-admin.sh)) — curls `http://frontend-admin:3001/` inside Compose and asserts the admin home page is reachable
+3. Runs **admin root routing smoke** ([`test-smoke-admin.sh`](../infra/scripts/test/test-smoke-admin.sh)) — curls `http://frontend-admin:3001/` inside Compose and asserts the admin home page HTML contains `admin-home-page`, `Admin App`, and `Admin shell` (see [`smoke-admin-root.sh`](../infra/scripts/test/smoke-admin-root.sh)). If you change admin home copy or layout, update that script.
 
 ```bash
 make test

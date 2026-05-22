@@ -159,6 +159,17 @@ The shared library lives in `packages/shared` and is consumed via workspace prot
 
 Next.js is configured to transpile the workspace dependency (`transpilePackages`).
 
+### Shared UI
+
+Import components from `@starter/shared/ui` and styles once per app layout. See [`ui-system.md`](ui-system.md) for theming, shadcn CLI usage, and component rules.
+
+```tsx
+import { Button, Alert, Navbar } from '@starter/shared/ui';
+import '@starter/shared/ui/styles/globals.css';
+```
+
+Run UI tests: `npx pnpm@9.15.0 --filter @starter/shared test`
+
 ### Backend API client
 
 All browser-to-backend HTTP goes through `@starter/shared`. **Do not** install or import Axios in `apps/frontend-main` or `apps/frontend-admin`.

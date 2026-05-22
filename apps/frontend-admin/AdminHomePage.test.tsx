@@ -9,7 +9,7 @@ import { server } from './vitest.setup';
 describe('AdminHomePage', () => {
   it('renders title', () => {
     render(<AdminHomePage />);
-    expect(screen.getByRole('heading', { name: /admin app hello world/i })).toBeInTheDocument();
+    expect(screen.getByText('API status')).toBeInTheDocument();
   });
 
   it('shows backend hello response', async () => {
@@ -58,7 +58,7 @@ describe('AdminHomePage', () => {
 
     render(<AdminHomePage />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(USER_MESSAGES.serverError);
+    expect(await screen.findByText(USER_MESSAGES.serverError)).toBeInTheDocument();
   });
 
   it('disables reload while loading', async () => {

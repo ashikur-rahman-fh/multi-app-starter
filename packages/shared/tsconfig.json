@@ -4,6 +4,12 @@
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "resolvePackageJsonImports": true,
+    "paths": {
+      "#ui/*": ["./src/ui/*"],
+      "#components/*": ["./src/ui/components/*"],
+      "#hooks/*": ["./src/hooks/*"]
+    },
     "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,

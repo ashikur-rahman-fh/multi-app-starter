@@ -31,12 +31,24 @@ Workspace package `@starter/shared` provides:
 - **API client layer** — Axios-based, type-safe HTTP in `packages/shared/src/api/` (never import Axios in frontend apps)
 - Preconfigured client: `backendMainApi` for the main Django backend
 - Thin endpoint helpers (`getHello`, future `getHealth`)
-- UI primitives (`Button`, `LoadingState`, `ErrorState`)
+- **Shared UI** (`packages/shared/src/ui/`) — **Calm Neutral Starter** theme (muted slate primary, soft neutrals, Inter + JetBrains Mono, light/dark). Tailwind v4, shadcn primitives, Basecoat CSS. Import via `@starter/shared/ui`. See [`ui-system.md`](ui-system.md).
 - Hooks (`useApi`)
 - Types and route constants
 - CSP / security headers for Next.js
 
 Exports are declared in `packages/shared/package.json` so imports are stable across local dev, Docker, and CI.
+
+#### Shared UI
+
+```text
+packages/shared/src/ui/
+  components/           # Public design-system components
+  primitives/shadcn/    # shadcn/ui primitives (CLI-maintained)
+  theme/                # ThemeProvider, tokens
+  styles/globals.css    # Tailwind + Basecoat + CSS variables
+```
+
+Both frontends import `@starter/shared/ui/styles/globals.css` in root layout and wrap content with `ThemeProvider`.
 
 #### Shared API client
 
