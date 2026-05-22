@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@starter/shared/ui';
 import '@starter/shared/ui/styles/globals.css';
+import { AdminAuthProvider } from '@/auth/AdminAuthProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Admin App',
-  description: 'Starter admin frontend shell',
+  title: 'Admin',
+  description: 'Admin sign-in and profile',
 };
 
 export default function RootLayout({
@@ -16,7 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AdminAuthProvider>{children}</AdminAuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

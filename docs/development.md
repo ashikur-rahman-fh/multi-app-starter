@@ -138,6 +138,42 @@ CI runs the same checks (`manage.py check` and `makemigrations --check --dry-run
 make backend-createsuperuser
 ```
 
+Use the same credentials to sign in to the **Next admin app** at `http://localhost:3001/login` (not only Django HTML admin at `http://localhost:8080/admin/`). Only **active superusers** can access the Next admin app.
+
+## Next admin app authentication
+
+| Route | Purpose |
+| ----- | ------- |
+| `/login` | Public sign-in page |
+| `/` | Protected profile (requires session) |
+
+**Local flow:**
+
+1. `make dev-up` and copy `infra/env/dev/.env` from the example.
+2. `make backend-createsuperuser`
+3. Open `http://localhost:3001/login` (admin UI) — API calls should use `NEXT_PUBLIC_BACKEND_MAIN_API_URL=http://localhost:8080` (Nginx → Django).
+4. Sign in; you are redirected to `/` with your profile.
+5. Sign out from the navbar button; you return to `/login`.
+
+**Shared API usage (do not call `fetch`/`axios` in app components):**
+
+```ts
+import { adminAuthApi, ensureAdminCsrf } from '@starter/shared/api';
+
+await ensureAdminCsrf();
+await adminAuthApi.login({ usernameOrEmail: 'admin', password: '…' });
+const user = await adminAuthApi.getCurrentUser();
+await adminAuthApi.logout();
+```
+
+`frontend-admin` wraps the app in `AdminAuthProvider` and uses `RequireAdminAuth` / `RedirectIfAuthenticated` guards. On refresh, the provider calls `ensureAdminCsrf()` then `getCurrentUser()` to restore the session.
+
+**Adding another protected admin page:** place it under `src/app/`, wrap content with `RequireAdminAuth`, and use `useAdminAuth()` for user state.
+
+**Backend tests:** `make test-backend` (includes `tests/test_admin_auth.py`).
+
+**Frontend tests:** `npx pnpm@9.15.0 --filter @starter/frontend-admin test`
+
 ## Release metadata
 
 Public release information is served by **`GET /api/public/meta/`**. Values come from source-controlled code in [`apps/backend/api/app_metadata.py`](../apps/backend/api/app_metadata.py), not deployment environment variables. That keeps version updates intentional, reviewable, and tied to the code being deployed.
@@ -234,22 +270,9 @@ try {
 - Do not expose raw backend or Axios errors to users.
 - Do not log secrets, tokens, cookies, `Authorization`, CSRF headers, or sensitive request bodies.
 
-**CSRF (when cookie auth is enabled):**
+**CSRF (admin session auth via `backendAdminApi`):**
 
-```ts
-createApiClient({
-  serviceName: 'backend-main',
-  baseURL: env.backendMainApiUrl,
-  withCredentials: true,
-  csrf: {
-    enabled: true,
-    cookieName: 'csrftoken',
-    headerName: 'X-CSRFToken',
-  },
-});
-```
-
-Production Django sets `CSRF_COOKIE_HTTPONLY=True`, so JavaScript cannot read `csrftoken` today; use a server/BFF route for CSRF when adding session auth.
+The admin client uses `withCredentials: true` and `csrf.tokenProvider` backed by `GET /api/admin/auth/csrf/` (required in production because `CSRF_COOKIE_HTTPONLY=True`). `backendMainApi` remains stateless (`withCredentials: false`).
 
 ## Common commands
 

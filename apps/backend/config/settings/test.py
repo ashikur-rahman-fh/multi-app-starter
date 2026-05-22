@@ -18,6 +18,7 @@ AXES_COOLOFF_TIME = timezone.timedelta(minutes=1)
 DRF_THROTTLE_RATES = {
     "anon": "10000/hour",
     "api": "10000/hour",
+    "admin_login": "10000/hour",
 }
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = DRF_THROTTLE_RATES  # noqa: F405
 

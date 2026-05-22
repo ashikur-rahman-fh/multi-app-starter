@@ -9,7 +9,8 @@ This starter is a **multi-container** system orchestrated by Docker Compose, wit
 - **Framework**: Django + Django REST Framework
 - **Public API** (custom): `GET /api/health/`, `GET /api/hello/`, `GET /api/public/meta/`
 - **API errors**: JSON envelope with `success: false` and `error.code`, `error.message`, `error.details` (safe messages only; no stack traces)
-- **Admin UI**: Django’s built-in admin at `/admin/` (no custom admin APIs)
+- **Admin API** (session auth): `GET /api/admin/auth/csrf/`, `POST /api/admin/auth/login/`, `POST /api/admin/auth/logout/`, `GET /api/admin/auth/me/` — active **superusers** only
+- **Django admin UI**: built-in HTML admin at `/admin/` (separate from the Next admin app)
 - **Data**: PostgreSQL via `DATABASES`
 - **Cache**: Redis via `django-redis` (`CACHES`)
 - **Settings split**: `config.settings.{dev,test,prod}` selected by `DJANGO_SETTINGS_MODULE`
@@ -17,7 +18,7 @@ This starter is a **multi-container** system orchestrated by Docker Compose, wit
 ### Frontends
 
 - **`apps/frontend-main`**: primary user-facing Next.js app.
-- **`apps/frontend-admin`**: separate Next.js “admin shell” skeleton (not Django admin).
+- **`apps/frontend-admin`**: Next.js admin app with session login (`/login`) and protected profile (`/`).
 
 Both apps:
 
@@ -29,8 +30,8 @@ Both apps:
 Workspace package `@starter/shared` provides:
 
 - **API client layer** — Axios-based, type-safe HTTP in `packages/shared/src/api/` (never import Axios in frontend apps)
-- Preconfigured client: `backendMainApi` for the main Django backend
-- Thin endpoint helpers (`getHello`, future `getHealth`)
+- Preconfigured clients: `backendMainApi` (stateless public API), `backendAdminApi` (session + CSRF for admin auth)
+- Thin endpoint helpers (`getHello`, `adminAuthApi`)
 - **Shared UI** (`packages/shared/src/ui/`) — **Calm Neutral Starter** theme (muted slate primary, soft neutrals, Inter + JetBrains Mono, light/dark). Tailwind v4, shadcn primitives, Basecoat CSS. Import via `@starter/shared/ui`. See [`ui-system.md`](ui-system.md).
 - Hooks (`useApi`)
 - Types and route constants
@@ -56,18 +57,36 @@ Both frontends import `@starter/shared/ui/styles/globals.css` in root layout and
 packages/shared/src/api/
   index.ts              # public barrel (@starter/shared/api)
   clients/
-    backend-main.ts     # backendMainApi
+    backend-main.ts     # backendMainApi (withCredentials: false)
+    backend-admin.ts    # backendAdminApi (withCredentials: true, CSRF tokenProvider)
   core/
     create-api-client.ts
     errors.ts, csrf.ts, env.ts, interceptors.ts, ...
-  hello.ts              # endpoint wrappers
+  hello.ts              # public endpoint wrappers
+  admin-auth.ts         # adminAuthApi (login, logout, getCurrentUser, ensureAdminCsrf)
 ```
 
 - **Single Axios dependency** lives in `@starter/shared`; both frontends consume clients from here.
 - **Multiple backends**: add `api/clients/backend-secondary.ts` with `createApiClient({ serviceName, baseURL: env.backendSecondaryApiUrl, ... })` and export from `api/index.ts`.
 - **Errors**: Axios failures are normalized to `ApiError` with safe `message` and flags (`isUnauthorized`, `isNetworkError`, etc.). UI code uses `isApiError()` and `getUserFacingMessage()` — never raw `AxiosError`.
-- **CSRF / cookies**: configurable per client (`csrf.enabled`, `withCredentials`); disabled by default on `backendMainApi` until cookie-based auth is added.
+- **CSRF / cookies**: `backendMainApi` stays stateless (`withCredentials: false`). `backendAdminApi` uses `withCredentials: true` and a CSRF bootstrap (`GET /api/admin/auth/csrf/`) because production sets `CSRF_COOKIE_HTTPONLY=True`.
 - **Env**: `NEXT_PUBLIC_BACKEND_MAIN_API_URL` (see [`environment-variables.md`](environment-variables.md)).
+
+### Admin authentication flow
+
+```mermaid
+sequenceDiagram
+  participant AdminUI as frontend_admin
+  participant API as django_api
+  AdminUI->>API: GET /api/admin/auth/csrf/
+  API-->>AdminUI: csrftoken cookie + csrfToken JSON
+  AdminUI->>API: POST /api/admin/auth/login/ (credentials + X-CSRFToken)
+  API-->>AdminUI: sessionid cookie + safe user JSON
+  AdminUI->>API: GET /api/admin/auth/me/
+  API-->>AdminUI: user JSON or 401/403
+```
+
+**Authorization policy:** authenticated, `is_active=True`, `is_superuser=True`. Staff-only users are rejected. Backend enforces this on login and `me`; the Next app adds route guards (`RequireAdminAuth`, `RedirectIfAuthenticated`) for UX only.
 
 ### PostgreSQL
 
@@ -113,8 +132,8 @@ flowchart LR
 
 ## Intentional non-goals (for this skeleton)
 
-- No authentication/authorization product features
-- No JWT/OAuth/SSO
+- No JWT/OAuth/SSO for the main user app
+- No staff RBAC beyond superuser gate for the Next admin app
 - No advanced observability platform wiring
 
 Extend these in application code when requirements appear.

@@ -9,7 +9,7 @@
 | Next prod builds    | Host                                  | `pnpm build` / CI **codebase-quality**             |
 | Backend unit        | Docker (Postgres + Redis)             | `make test` / CI **docker-tests**                  |
 | Backend integration | Docker (Postgres + Redis)             | `make test` / CI **docker-tests**                  |
-| Admin root routing  | Docker (curl smoke)                   | `make test` / CI **docker-tests**                  |
+| Admin login smoke   | Docker (curl smoke)                   | `make test` / CI **docker-tests**                  |
 
 Frontend tests use **MSW** to mock `/api/hello/` (handlers use `*/api/hello/`). Axios uses XHR in jsdom; MSW 2.x intercepts those requests.
 
@@ -20,6 +20,7 @@ Frontend tests use **MSW** to mock `/api/hello/` (handlers use `*/api/hello/`). 
 - **Adapter mocks** — `createApiClient({ adapter })` with `createMockAdapter()` for deterministic unit tests (no real network).
 - **Coverage** — success/error paths, CSRF, env validation, safe logging redaction.
 - **Integration** — `hello.integration.test.ts` uses MSW against `getHello()`.
+- **Admin auth** — `admin-auth.test.ts` (mock adapter: login/me/logout, CSRF, 401/403).
 
 Run shared tests only:
 
@@ -52,7 +53,11 @@ make test           # backend pytest + admin root smoke in Docker
 
 1. Starts **postgres-test** and **redis-test**, waits for readiness
 2. Runs **`test-runner`** (pytest unit + integration)
-3. Runs **admin root routing smoke** ([`test-smoke-admin.sh`](../infra/scripts/test/test-smoke-admin.sh)) — curls `http://frontend-admin:3001/` inside Compose and asserts the admin home page HTML contains `admin-home-page`, `Admin App`, and `Admin shell` (see [`smoke-admin-root.sh`](../infra/scripts/test/smoke-admin-root.sh)). If you change admin home copy or layout, update that script.
+3. Runs **admin login smoke** ([`test-smoke-admin.sh`](../infra/scripts/test/test-smoke-admin.sh)) — curls `http://frontend-admin:3001/login` and asserts `admin-login-page` and `Admin sign in` (see [`smoke-admin-root.sh`](../infra/scripts/test/smoke-admin-root.sh)).
+
+**Backend admin auth tests:** `apps/backend/tests/test_admin_auth.py` — run via `make test-backend`.
+
+**Frontend admin auth tests:** `apps/frontend-admin/admin-auth.test.tsx` — run via `npx pnpm@9.15.0 --filter @starter/frontend-admin test`.
 
 ```bash
 make test

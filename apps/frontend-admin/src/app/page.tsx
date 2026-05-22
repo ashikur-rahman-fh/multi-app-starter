@@ -1,5 +1,5 @@
-import { AdminHomePage } from './AdminHomePage';
+import { AdminProfilePage } from './AdminProfilePage';
 
 export default function Page() {
-  return <AdminHomePage />;
+  return <AdminProfilePage />;
 }

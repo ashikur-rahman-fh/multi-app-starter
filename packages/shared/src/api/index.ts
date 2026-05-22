@@ -1,4 +1,11 @@
-export { backendMainApi } from './clients';
+export { adminAuthApi, ensureAdminCsrf } from './admin-auth';
+export {
+  backendAdminApi,
+  backendMainApi,
+  getAdminCsrfToken,
+  resetAdminCsrfTokenForTests,
+  setAdminCsrfToken,
+} from './clients';
 export { createApiClient } from './core/create-api-client';
 export {
   ApiError,
@@ -22,3 +29,9 @@ export type {
   RetryConfig,
 } from './core/types';
 export { getHello } from './hello';
+export type {
+  AdminCsrfResponse,
+  AdminLoginRequest,
+  AdminLogoutResponse,
+  AdminUser,
+} from '../types/admin-auth';

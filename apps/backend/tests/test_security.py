@@ -102,10 +102,10 @@ def test_prod_settings_reject_non_https_origins(origin):
         validate_prod_origins("CORS_ALLOWED_ORIGINS", [origin])
 
 
-def test_cors_credentials_disabled():
+def test_cors_credentials_enabled_for_admin_session_auth():
     from django.conf import settings
 
-    assert settings.CORS_ALLOW_CREDENTIALS is False
+    assert settings.CORS_ALLOW_CREDENTIALS is True
 
 
 def test_upload_size_limits_configured():

@@ -136,7 +136,7 @@ make dev-up
 
 Migrations apply automatically when the backend container starts. After model changes, create migration files with `make backend-makemigrations`, then restart the backend (`make dev-restart`). Use `make backend-migrate` only for manual troubleshooting.
 
-Create an admin user for Django admin:
+Create a superuser (Django HTML admin and Next admin app):
 
 ```bash
 make backend-createsuperuser
@@ -148,12 +148,12 @@ make backend-createsuperuser
 | -------------- | ------------------------------------------------------------------------------------ |
 | **Nginx (recommended)** | http://localhost:8080 — main site, `/api/`, `/admin/` (Django)                       |
 | Main frontend  | http://localhost:3000 (direct) or http://localhost:8080/ (via Nginx)                 |
-| Admin frontend | http://localhost:3001/ (admin home page; dedicated port in dev)                      |
+| Admin frontend | http://localhost:3001/login (Next admin sign-in; profile at `/`)                   |
 | Backend API (browser) | http://localhost:8080/api/ via Nginx (`NEXT_PUBLIC_BACKEND_MAIN_API_URL`)             |
 | Backend API (direct) | http://localhost:8000/api/ (host → container; debugging only)                  |
 | Django admin   | http://localhost:8080/admin/ (Nginx) or http://localhost:8000/admin/               |
 
-**Note:** Django’s admin UI is at `/admin/` on Nginx (`:8080`). The Next admin shell runs on **`:3001/`** so it does not collide with Django. Dev Compose sets `NEXT_PUBLIC_BACKEND_MAIN_API_URL=http://localhost:8080` for browser API calls via Nginx.
+**Note:** Django’s HTML admin is at `/admin/` on Nginx (`:8080`). The Next admin app runs on **`:3001`** with session auth against `/api/admin/auth/*`. Dev Compose sets `NEXT_PUBLIC_BACKEND_MAIN_API_URL=http://localhost:8080` for browser API calls via Nginx. See [`docs/development.md`](docs/development.md#next-admin-app-authentication).
 
 ## Debug development (Django + debugpy)
 

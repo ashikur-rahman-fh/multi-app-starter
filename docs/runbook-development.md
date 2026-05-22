@@ -26,6 +26,14 @@ make dev-up
 
 5. The backend container applies migrations on startup. If you change models later, run `make backend-makemigrations` and restart (`make dev-restart`).
 
+## Admin app sign-in (quick check)
+
+1. `make backend-createsuperuser`
+2. Open http://localhost:3001/login and sign in (superuser only)
+3. Profile page at http://localhost:3001/
+
+See [`development.md`](development.md#next-admin-app-authentication) for auth architecture and tests.
+
 ## Daily workflow
 
 - Start: `make dev-up` (detached; no log stream in that shell)

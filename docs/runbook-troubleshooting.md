@@ -126,7 +126,8 @@ Fix:
 - Include Nginx origin if you browse via `http://localhost:8080`
 - Production requires `https://` origins only in `CORS_ALLOWED_ORIGINS` / `CSRF_TRUSTED_ORIGINS` (no `http://127.0.0.1` or `http://backend`)
 - Deploy health checks use `ALLOWED_HOSTS` and `HEALTH_CHECK_HTTP_HOST`, not CORS/CSRF trusted origins
-- `CORS_ALLOW_CREDENTIALS` is `false`; do not send cookies on cross-origin API calls unless you add CSRF-aware session auth
+- `CORS_ALLOW_CREDENTIALS` must be `true` for the Next admin app (session cookies). The main app still omits credentials on API calls.
+- Include `http://localhost:3001` (and `127.0.0.1:3001`) in dev `CORS_ALLOWED_ORIGINS` and `CSRF_TRUSTED_ORIGINS`
 
 ## CSRF issues
 
@@ -135,7 +136,19 @@ Symptoms: `403 Forbidden` on POST/PUT from the browser with CSRF failure.
 Fix:
 
 - Add the browser origin to `CSRF_TRUSTED_ORIGINS` (scheme + host + port)
-- For Django admin or session forms, include the CSRF token (`csrftoken` cookie + `X-CSRFToken` header or form field)
+- For the Next admin app, call `GET /api/admin/auth/csrf/` first; `backendAdminApi` sends `X-CSRFToken` on unsafe requests
+- For Django HTML admin, include the CSRF token (`csrftoken` cookie + `X-CSRFToken` header or form field)
+
+## Next admin sign-in issues
+
+| Symptom | Likely cause | Fix |
+| ------- | ------------- | --- |
+| Invalid login (generic message) | Wrong password, inactive user, or non-superuser | `make backend-createsuperuser`; confirm `is_superuser=True` |
+| Permission denied after sign-in | User is staff but not superuser | Use a superuser account |
+| CSRF / 403 on login or logout | Missing CSRF bootstrap or origin not trusted | Check `CSRF_TRUSTED_ORIGINS`; ensure `ensureAdminCsrf()` runs before POST |
+| CORS error from `:3001` | API origin not allowlisted | Add admin origin to `CORS_ALLOWED_ORIGINS`; keep `CORS_ALLOW_CREDENTIALS=true` |
+| Session expired / 401 on `/` | Session ended or cookies blocked | Sign in again; check third-party cookie settings |
+| API unreachable | Wrong `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | Use `http://localhost:8080` when using dev Nginx (see `infra/env/dev/.env.example`) |
 
 ## Rate limiting (429)
 

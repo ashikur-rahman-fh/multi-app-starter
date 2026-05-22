@@ -23,6 +23,8 @@ Values are examples. Generate strong secrets for anything security-sensitive.
 | ----------------------- | ----------------------------------------------------------------------- |
 | `DRF_THROTTLE_ANON`     | DRF anonymous throttle rate (default `100/hour`).                       |
 | `DRF_THROTTLE_API`      | DRF scoped API throttle rate (default `200/hour`). `/api/health/` is exempt. |
+| `DRF_THROTTLE_ADMIN_LOGIN` | Throttle rate for `POST /api/admin/auth/login/` (default `10/minute`). |
+| `CORS_ALLOW_CREDENTIALS` | When `true` (default), browsers may send cookies to the API from allowed origins. Required for Next admin session auth. Main app still uses `withCredentials: false`. |
 | `AXES_FAILURE_LIMIT`    | Failed Django admin logins before lockout (default `5`).                |
 | `AXES_COOLOFF_MINUTES`  | Admin lockout duration in minutes (default `30`).                         |
 | `DATA_UPLOAD_MAX_BYTES` | Django in-memory upload cap in bytes (default `2621440` / 2.5 MiB).     |
@@ -35,7 +37,7 @@ Nginx also applies per-IP rate limits at the edge (`infra/nginx/snippets/`). Wit
 
 **Next.js CSP:** `NEXT_PUBLIC_BACKEND_MAIN_API_URL` is included in the frontend `connect-src` directive at build time (see `packages/shared/src/security/headers.mjs`).
 
-**CSRF cookie (production):** `CSRF_COOKIE_HTTPONLY=True` prevents JavaScript from reading `csrftoken`. This is fine for Django admin and today’s stateless API calls from Next. If Next apps later use cookie/session auth, enable CSRF on `backendMainApi` and provide the token via a server route/BFF, or consciously set `CSRF_COOKIE_HTTPONLY=False` (weaker; requires `SameSite` + HTTPS).
+**CSRF cookie (production):** `CSRF_COOKIE_HTTPONLY=True` prevents JavaScript from reading `csrftoken`. The Next admin app uses `GET /api/admin/auth/csrf/` and `backendAdminApi` (`X-CSRFToken`). Ensure the admin browser origin is in `CSRF_TRUSTED_ORIGINS` and `CORS_ALLOWED_ORIGINS`. `backendMainApi` remains stateless.
 
 ## PostgreSQL
 

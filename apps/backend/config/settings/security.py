@@ -11,8 +11,9 @@ def _env_bool(name: str, default: str = "false") -> bool:
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DATA_UPLOAD_MAX_BYTES", "2621440"))
 DATA_UPLOAD_MAX_NUMBER_FIELDS = int(os.environ.get("DATA_UPLOAD_MAX_FIELDS", "1000"))
 
-# CORS — explicit, minimal allowlists (frontends use stateless fetch without credentials today).
-CORS_ALLOW_CREDENTIALS = False
+# CORS — explicit origins; credentials enabled for admin session auth (main app still
+# uses withCredentials: false and does not send cookies).
+CORS_ALLOW_CREDENTIALS = _env_bool("CORS_ALLOW_CREDENTIALS", "true")
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"]
 CORS_ALLOW_HEADERS = [
     "accept",
@@ -40,6 +41,7 @@ AXES_CACHE = "default"
 DRF_THROTTLE_RATES = {
     "anon": os.environ.get("DRF_THROTTLE_ANON", "100/hour"),
     "api": os.environ.get("DRF_THROTTLE_API", "200/hour"),
+    "admin_login": os.environ.get("DRF_THROTTLE_ADMIN_LOGIN", "10/minute"),
 }
 
 # django-csp (Django admin and other HTML responses; API JSON excluded)
