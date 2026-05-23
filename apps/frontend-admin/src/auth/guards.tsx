@@ -48,11 +48,7 @@ export function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading) {
-    return <AuthLoadingShell label="Checking your session…" />;
-  }
-
-  if (isAuthenticated) {
+  if (!isLoading && isAuthenticated) {
     return <AuthLoadingShell label="Redirecting…" />;
   }
 

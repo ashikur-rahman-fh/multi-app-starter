@@ -18,7 +18,7 @@ while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
     last_http_ok=1
     if [ -n "$SMOKE_ADMIN_MARKER" ]; then
       if echo "$body" | grep -q "$SMOKE_ADMIN_MARKER"; then
-        echo "OK: GET / returns admin home page (marker: ${SMOKE_ADMIN_MARKER})"
+        echo "OK: GET /login returns admin login page (marker: ${SMOKE_ADMIN_MARKER})"
         exit 0
       fi
       echo "  attempt ${attempt}/${MAX_ATTEMPTS}: HTTP 200 but missing marker \"${SMOKE_ADMIN_MARKER}\""
@@ -27,7 +27,7 @@ while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
       echo "OK: GET /login returns admin login page"
       exit 0
     else
-      echo "  attempt ${attempt}/${MAX_ATTEMPTS}: HTTP 200 but admin home markers not found yet"
+      echo "  attempt ${attempt}/${MAX_ATTEMPTS}: HTTP 200 but admin login markers not found yet"
     fi
   else
     last_http_ok=0
@@ -35,10 +35,10 @@ while [ "$attempt" -lt "$MAX_ATTEMPTS" ]; do
   fi
   if [ "$attempt" -eq "$MAX_ATTEMPTS" ]; then
     if [ "$last_http_ok" -eq 1 ]; then
-      echo "FAIL: admin root returned HTTP 200 but expected page content was missing" >&2
+      echo "FAIL: GET /login returned HTTP 200 but expected page content was missing" >&2
       echo "  Expected: data-testid=admin-login-page and \"Admin sign in\" (or SMOKE_ADMIN_MARKER)" >&2
     else
-      echo "FAIL: admin root did not become reachable in time" >&2
+      echo "FAIL: GET /login did not become reachable in time" >&2
     fi
     exit 1
   fi

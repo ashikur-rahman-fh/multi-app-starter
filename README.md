@@ -186,7 +186,7 @@ Local (requires Docker + `infra/env/test/.env`):
 make test
 ```
 
-Prefer **`pnpm check`** for format/lint/Vitest/Next builds, then **`make test`** for backend pytest and admin routing smoke in Docker. `make test` runs `test-all.sh` (pytest, then curl smoke for `http://localhost:3001/`). Use **`make test-smoke-admin`** to rerun smoke only.
+Prefer **`pnpm check`** for format/lint/Vitest/Next builds, then **`make test`** for backend pytest and admin routing smoke in Docker. `make test` runs `test-all.sh` (pytest, then curl smoke for `http://localhost:3001/login`). Use **`make test-smoke-admin`** to rerun smoke only.
 
 ## Production skeleton
 
