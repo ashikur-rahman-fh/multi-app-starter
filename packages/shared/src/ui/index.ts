@@ -26,6 +26,9 @@ export { Input, type InputProps } from './components/input';
 export { PasswordInput, type PasswordInputProps } from './components/password-input/password-input';
 export {
   ThemeProvider,
+  getThemeHtmlClass,
+  getThemeProviderModeConfig,
+  parseThemeMode,
   defaultThemeConfig,
   starterThemeId,
   starterThemeName,
@@ -37,5 +40,7 @@ export {
   shadowTokens,
   fontFamilySans,
   fontFamilyMono,
+  type ThemeMode,
+  type ThemeProviderModeConfig,
 } from './theme';
 export { cn } from './utils/cn';

@@ -99,12 +99,14 @@ jobs:
         env:
           NEXT_PUBLIC_BACKEND_MAIN_API_URL: ${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
           NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+          NEXT_PUBLIC_THEME_MODE: ${{ vars.NEXT_PUBLIC_THEME_MODE }}
         run: pnpm --filter @starter/frontend-main run build
 
       - name: Production build (frontend-admin)
         env:
           NEXT_PUBLIC_BACKEND_MAIN_API_URL: ${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
           NEXT_PUBLIC_BASE_PATH: ${{ vars.NEXT_PUBLIC_BASE_PATH }}
+          NEXT_PUBLIC_THEME_MODE: ${{ vars.NEXT_PUBLIC_THEME_MODE }}
         run: pnpm --filter @starter/frontend-admin run build
 
       - name: Verify Next.js build artifacts
@@ -205,6 +207,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_BACKEND_MAIN_API_URL=${{ vars.NEXT_PUBLIC_BACKEND_MAIN_API_URL }}
             NEXT_PUBLIC_BASE_PATH=${{ vars.NEXT_PUBLIC_BASE_PATH }}
+            NEXT_PUBLIC_THEME_MODE=${{ vars.NEXT_PUBLIC_THEME_MODE }}
           cache-from: type=gha,scope=${{ matrix.image_suffix }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image_suffix }}
 

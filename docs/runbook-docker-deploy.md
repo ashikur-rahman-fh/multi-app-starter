@@ -202,6 +202,7 @@ For **each** environment, add:
 | `BRANCH_SLUG` | `staging` | `release` |
 | `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | `https://api.staging.example.com` | `https://api.example.com` |
 | `NEXT_PUBLIC_BASE_PATH` | *(leave empty)* | *(leave empty)* |
+| `NEXT_PUBLIC_THEME_MODE` | `system` | `system` |
 | `DEPLOY_PATH` | `/opt/multi-app-starter` | `/opt/multi-app-starter` |
 | `COMPOSE_FILE` | `infra/docker/compose/docker-compose.prod.yml` | same |
 | `BACKUP_DIR` | `/var/backups/multi-app-starter` | `/var/backups/multi-app-starter` |
@@ -214,6 +215,7 @@ With [GitHub CLI](https://cli.github.com/) (`gh`), for example:
 ```bash
 gh variable set NEXT_PUBLIC_BACKEND_MAIN_API_URL --env staging_env --body 'https://api.staging.example.com'
 gh variable set NEXT_PUBLIC_BASE_PATH --env staging_env --body ''
+gh variable set NEXT_PUBLIC_THEME_MODE --env staging_env --body 'system'
 gh variable set APP_DOMAIN --env staging_env --body 'api.staging.example.com'
 ```
 
@@ -229,6 +231,7 @@ Repeat for `release_env` when using production. `NEXT_PUBLIC_BASE_PATH` must be 
 | `DEPLOY_PATH` | Yes — full git clone path on the VM |
 | `COMPOSE_FILE` | Optional — defaults to `infra/docker/compose/docker-compose.prod.yml` |
 | `NEXT_PUBLIC_BASE_PATH` | Optional (usually empty; set only for path-based admin routing in custom deployments) |
+| `NEXT_PUBLIC_THEME_MODE` | Optional — accepted values: `system` (default), `light`, `dark`; invalid values fall back to `system` in both frontend apps |
 | `BACKUP_DIR` | Optional — defaults to `/var/backups/<PROJECT_NAME>` on VM |
 | `DB_SERVICE_NAME` | Optional — defaults to `postgres` |
 | `DB_BACKUP_COMMAND` | Optional — custom backup shell command; empty = default PostgreSQL `pg_dump` |
@@ -530,6 +533,7 @@ Compose overlay for registry pulls: [`infra/docker/compose/docker-compose.deploy
 | `COMPOSE_FILE` | Variable | Prod compose path |
 | `NEXT_PUBLIC_BACKEND_MAIN_API_URL` | Variable | Browser-facing API URL at build time |
 | `NEXT_PUBLIC_BASE_PATH` | Variable | Optional Next base path |
+| `NEXT_PUBLIC_THEME_MODE` | Variable | Shared frontend theme mode (`system`, `light`, `dark`) |
 | `BACKUP_DIR` | Variable | Backup directory on VM |
 | `DB_SERVICE_NAME` | Variable | DB service name (default `postgres`) |
 | `DB_BACKUP_COMMAND` | Variable | Optional custom backup command |

@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
-import { ThemeProvider } from '@starter/shared/ui';
+import {
+  getThemeHtmlClass,
+  getThemeProviderModeConfig,
+  parseThemeMode,
+  ThemeProvider,
+} from '@starter/shared/ui';
 import '@starter/shared/ui/styles/globals.css';
 import { AdminAuthProvider } from '@/auth/AdminAuthProvider';
 import './globals.css';
@@ -14,10 +19,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const themeMode = parseThemeMode(process.env.NEXT_PUBLIC_THEME_MODE);
+  const themeProviderModeConfig = getThemeProviderModeConfig(themeMode);
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={getThemeHtmlClass(themeMode)}>
       <body>
-        <ThemeProvider>
+        <ThemeProvider {...themeProviderModeConfig}>
           <AdminAuthProvider>{children}</AdminAuthProvider>
         </ThemeProvider>
       </body>

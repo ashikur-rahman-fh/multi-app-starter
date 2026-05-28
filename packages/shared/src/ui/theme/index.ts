@@ -1,5 +1,12 @@
 export { ThemeProvider } from './theme-provider';
 export {
+  getThemeHtmlClass,
+  getThemeProviderModeConfig,
+  parseThemeMode,
+  type ThemeMode,
+  type ThemeProviderModeConfig,
+} from './theme-mode';
+export {
   defaultThemeConfig,
   starterThemeId,
   starterThemeName,

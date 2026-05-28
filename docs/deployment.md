@@ -68,6 +68,7 @@ Next.js bakes `NEXT_PUBLIC_*` variables at build time. [`infra/docker/compose/do
 
 - `NEXT_PUBLIC_BACKEND_MAIN_API_URL`
 - `NEXT_PUBLIC_BASE_PATH` (usually empty when using host-based routing)
+- `NEXT_PUBLIC_THEME_MODE` (`system` by default; optional `light`/`dark` to force mode in both frontend apps)
 
 ## Backend process model
 
