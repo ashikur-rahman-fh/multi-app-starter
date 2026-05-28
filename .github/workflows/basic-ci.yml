@@ -3,7 +3,6 @@ name: Basic CI Test
 on:
   push:
     branches: [master]
-  pull_request:
 
 jobs:
   # Format, lint, typecheck, Vitest, Next production builds, audit — fast on the runner (no test DB).

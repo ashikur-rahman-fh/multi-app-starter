@@ -77,7 +77,17 @@ Admin routing smoke uses [`docker-compose.smoke.yml`](../infra/docker/compose/do
 
 ## GitHub Actions
 
-### Pull requests and `master` — [`.github/workflows/basic-ci.yml`](../.github/workflows/basic-ci.yml)
+### Pull requests — [`.github/workflows/pr-ci.yml`](../.github/workflows/pr-ci.yml)
+
+| Job                 | What it runs                                                                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **code-check**      | Prettier, Ruff, Django `manage.py check`, `makemigrations --check --dry-run`, ESLint, typecheck, dependency audit                                                     |
+| **workspace-tests** | Vitest across the monorepo (`pnpm test`)                                                                                                                              |
+| **test**            | `test-all.sh` — backend pytest + admin root routing smoke (Docker)                                                                                                    |
+| **build**           | Next.js production builds for both frontends (`build-frontends.sh`)                                                                                                   |
+| **docker-build**    | After tests and build pass: verify all prod Dockerfiles build (backend, frontend-main, frontend-admin, nginx, test-runner)                                            |
+
+### Push to `master` — [`.github/workflows/basic-ci.yml`](../.github/workflows/basic-ci.yml)
 
 | Job                  | What it runs                                                                                                                                                          |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
