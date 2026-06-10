@@ -24,7 +24,7 @@ For VS Code/Cursor and local `pnpm check`, also run `make editor-happy` (host de
 make dev-up
 ```
 
-5. The backend container applies migrations on startup. If you change models later, run `make backend-makemigrations` and restart (`make dev-restart`).
+5. The backend container applies migrations on startup. If you change models later, run `make backend-makemigrations`, then restart (`make dev-restart` or `make dev-up`) — startup runs `migrate` automatically. If the backend crash-loops instead, see [Migration issues — crash-loop](runbook-troubleshooting.md#backend-crash-loop-migration-dependency-loop).
 
 ## Admin app sign-in (quick check)
 

@@ -188,12 +188,32 @@ Fix:
 
 Symptoms: `django.db.migrations.exceptions...` or “relation does not exist”.
 
-**Development:**
+**Development — normal workflow:**
 
-- Backend startup runs `wait_for_db` then `migrate --noinput`. If the container exits immediately, check logs: `make dev-logs`
-- Message about missing migration files → `make backend-makemigrations`, then restart
-- `make backend-migrate` for a manual apply
-- `make backend-check-migrations` before pushing (same as CI)
+1. Change Django models.
+2. `make backend-makemigrations`
+3. Restart so migrations apply: `make dev-restart` or `make dev-up`. Startup runs `migrate --noinput` — you usually do not need `make backend-migrate` after that.
+4. `make backend-check-migrations` before pushing (same as CI).
+
+`make backend-migrate` is for manual troubleshooting only.
+
+### Backend crash-loop (migration dependency loop)
+
+**Symptoms:** backend container repeatedly restarting; `make dev-logs` shows `Model changes need migration files` or `makemigrations --check` failure from the entrypoint.
+
+**Cause:** the dev entrypoint runs `makemigrations --check --dry-run` before `migrate`. If migration files are missing, the container exits. `make backend-makemigrations` uses `exec` and requires a healthy backend — creating a dependency loop while the backend is crash-looping.
+
+**Fix:** ensure postgres and redis are up (`make dev-up` starts them even if the backend loops), then use a one-off container:
+
+```bash
+docker compose --project-directory . \
+  -f infra/docker/compose/docker-compose.dev.yml \
+  run --rm backend python manage.py makemigrations
+```
+
+Commit the new migration files, then `make dev-restart` (or `make dev-up`).
+
+See [`development.md`](development.md#backend-crash-loop-migration-dependency-loop) for the full workflow.
 
 **Production deploy failed during release tasks:**
 

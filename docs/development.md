@@ -116,13 +116,31 @@ After you change Django models, create migration files (not auto-generated at st
 make backend-makemigrations
 ```
 
-Restart the backend container (or `make dev-restart`) so the new migrations are applied.
+Restart so migrations apply (`make dev-restart` or `make dev-up`). Startup runs `migrate --noinput` automatically — you usually do not need `make backend-migrate` after that.
 
 Manual migrate (troubleshooting or one-off):
 
 ```bash
 make backend-migrate
 ```
+
+### Backend crash-loop (migration dependency loop)
+
+If the backend keeps crash-looping (for example you deleted a migration file, or model changes lack migration files), the entrypoint exits before Django serves. Logs show `Model changes need migration files` or a `makemigrations --check` failure (`make dev-logs`).
+
+`make backend-makemigrations` uses `exec` and needs a healthy backend container — which you do not have while it is crash-looping.
+
+Ensure postgres and redis are up (`make dev-up` starts them even if the backend loops), then run `makemigrations` in a one-off container:
+
+```bash
+docker compose --project-directory . \
+  -f infra/docker/compose/docker-compose.dev.yml \
+  run --rm backend python manage.py makemigrations
+```
+
+Commit the new migration files, then `make dev-restart` (or `make dev-up`). The dev and debug stacks share the same startup entrypoint; use the dev compose file for the one-off command.
+
+See also [runbook-troubleshooting.md — Migration issues](runbook-troubleshooting.md#backend-crash-loop-migration-dependency-loop).
 
 Verify migration files are committed before opening a PR:
 

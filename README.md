@@ -134,7 +134,7 @@ See [`docs/environment-variables.md`](docs/environment-variables.md) for what ea
 make dev-up
 ```
 
-Migrations apply automatically when the backend container starts. After model changes, create migration files with `make backend-makemigrations`, then restart the backend (`make dev-restart`). Use `make backend-migrate` only for manual troubleshooting.
+Migrations apply automatically when the backend container starts. After model changes, create migration files with `make backend-makemigrations`, then restart (`make dev-restart` or `make dev-up`) — you usually do not need `make backend-migrate`. If the backend crash-loops, see [troubleshooting](docs/runbook-troubleshooting.md#backend-crash-loop-migration-dependency-loop).
 
 Create a superuser (Django HTML admin and Next admin app):
 
