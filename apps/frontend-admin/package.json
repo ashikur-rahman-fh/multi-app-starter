@@ -7,9 +7,9 @@
     "dev": "next dev -H 0.0.0.0 -p 3001",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3001",
-    "lint": "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --max-warnings 0 --fix",
-    "typecheck": "tsc --noEmit",
+    "lint": "next typegen && eslint . --max-warnings 0",
+    "lint:fix": "next typegen && eslint . --max-warnings 0 --fix",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
@@ -37,6 +37,6 @@
     "msw": "^2.6.8",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.46.0",
-    "vitest": "^2.1.6"
+    "vitest": "^3.2.6"
   }
 }

@@ -32,6 +32,10 @@ node_modules/
 dist/
 coverage/
 
+# TypeScript / Next.js generated (do not commit)
+*.tsbuildinfo
+next-env.d.ts
+
 # OS / logs
 .DS_Store
 *.log
